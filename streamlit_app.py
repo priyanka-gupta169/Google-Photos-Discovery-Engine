@@ -24,11 +24,12 @@ st.set_page_config(
     page_title="Google Photos Discovery Engine | PM Workbench",
     page_icon="🔍",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 # Custom Styling
-st.markdown("""
+st.markdown(
+    """
 <style>
     .main-header {
         font-size: 2.2rem;
@@ -43,13 +44,6 @@ st.markdown("""
         font-size: 1.05rem;
         margin-bottom: 1.5rem;
     }
-    .metric-card {
-        background-color: #0f172a;
-        border: 1px solid #1e293b;
-        border-radius: 12px;
-        padding: 16px 20px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
     }
@@ -57,16 +51,10 @@ st.markdown("""
         padding: 8px 18px;
         border-radius: 8px;
     }
-    .badge-problem-b {
-        background-color: #064e3b;
-        color: #34d399;
-        padding: 3px 8px;
-        border-radius: 6px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 
 @st.cache_resource
@@ -79,19 +67,24 @@ db = get_database()
 
 # Sidebar
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/4/4f/Google_Photos_icon_%282020%29.svg", width=64)
+    st.image(
+        "https://upload.wikimedia.org/wikipedia/commons/4/4f/Google_Photos_icon_%282020%29.svg",
+        width=64,
+    )
     st.markdown("### Google Photos Discovery Engine")
     st.markdown("**NextLeap PM Graduation Project**")
     st.markdown("*Core Experience Team*")
     st.markdown("---")
-    
+
     st.markdown("#### 🎯 Business Goal")
-    st.info("Increase the % of users who successfully retrieve a photo they remember but cannot precisely describe.")
-    
+    st.info(
+        "Increase the % of users who successfully retrieve a photo they remember but cannot precisely describe."
+    )
+
     st.markdown("#### 🔬 Scope Isolation")
     st.markdown("- **Problem B (In Scope)**: Search & Retrieval friction on existing photos.")
     st.markdown("- **Problem A (Excluded)**: Cloud backup sync loss & storage caps.")
-    
+
     st.markdown("---")
     st.markdown("#### 🔗 Deployments")
     st.markdown("- [React PM Workbench (Vercel)](https://github.com/priyanka-gupta169/Google-Photos-Discovery-Engine)")
@@ -101,7 +94,10 @@ with st.sidebar:
 
 # Title banner
 st.markdown('<div class="main-header">Google Photos Discovery Engine</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-header">Evidence-Driven Qualitative Retrieval Friction Discovery Engine & Analytical PM Workbench</div>', unsafe_allow_html=True)
+st.markdown(
+    '<div class="sub-header">Evidence-Driven Qualitative Retrieval Friction Discovery Engine & Analytical PM Workbench</div>',
+    unsafe_allow_html=True,
+)
 
 # Tabs
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
@@ -110,13 +106,13 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "📈 7D Opportunity Matrix",
     "📝 Synthesized Findings (8)",
     "🔬 Live AI Classifier",
-    "🌐 Architecture & Cloud API"
+    "🌐 Architecture & Cloud API",
 ])
 
 # ----------------- TAB 1: EXECUTIVE KPI OVERVIEW -----------------
 with tab1:
     stats = db.get_overview_stats()
-    
+
     col1, col2, col3, col4, col5 = st.columns(5)
     with col1:
         st.metric("Total Raw Evidence", "1,400+")
@@ -128,21 +124,21 @@ with tab1:
         st.metric("Opportunity Areas", stats.get("total_opportunities", 17))
     with col5:
         st.metric("Research Findings", stats.get("total_findings", 8))
-        
+
     st.markdown("---")
-    
+
     c_left, c_right = st.columns(2)
     with c_left:
         st.subheader("Source Distribution (Authentic Public Records)")
         source_dist = stats.get("source_distribution", {"Google Play": 57, "App Store": 15})
         df_sources = pd.DataFrame(list(source_dist.items()), columns=["Source", "Count"])
         st.bar_chart(df_sources.set_index("Source"))
-        
+
     with c_right:
         st.subheader("Temporal Span & Provenance Integrity")
         t_span = stats.get("temporal_span", {})
-        st.markdown(f"- **Earliest Verified Feedback**: `{t_span.get('earliest', '2018-10-15')[:10]}`")
-        st.markdown(f"- **Latest Verified Feedback**: `{t_span.get('latest', '2026-09-22')[:10]}`")
+        st.markdown(f"- **Earliest Verified Feedback**: `{str(t_span.get('earliest', '2018-10-15'))[:10]}`")
+        st.markdown(f"- **Latest Verified Feedback**: `{str(t_span.get('latest', '2026-09-22'))[:10]}`")
         st.markdown("- **Relevance Precision**: `100.0%` (Zero Problem A contamination)")
         st.markdown("- **Provenance Citation Audit**: `100% DAG Passed` (Zero synthetic quotes)")
         st.markdown("- **Clustering Algorithm**: HDBSCAN Density-Based + TF-IDF Keyword Extraction")
@@ -151,36 +147,50 @@ with tab1:
 with tab2:
     st.subheader("17 Emergent Retrieval Friction Clusters (HDBSCAN)")
     clusters = db.get_all_clusters()
-    
+
     if clusters:
         cluster_data = []
         for c in clusters:
+            stages = list(c.affected_failure_stages.keys()) if getattr(c, "affected_failure_stages", None) else ["RETRIEVAL_RELEVANCE"]
+            stage_str = ", ".join(stages)
+            dom_objs = ", ".join(getattr(c, "dominant_retrieval_objects", []))
             cluster_data.append({
                 "Cluster ID": c.cluster_id,
                 "Name": c.name,
-                "Size (N)": c.size,
-                "Failure Stage": c.failure_stage,
-                "Dominant Dimension": c.dominant_dimension,
-                "Representative Quote": c.representative_quote
+                "Volume (N)": getattr(c, "evidence_count", 0),
+                "Failure Stages": stage_str,
+                "Retrieval Objects": dom_objs,
+                "Description": getattr(c, "description", ""),
             })
         df_clusters = pd.DataFrame(cluster_data)
-        st.dataframe(df_clusters[["Cluster ID", "Name", "Size (N)", "Failure Stage", "Dominant Dimension"]], use_container_width=True)
-        
+        st.dataframe(
+            df_clusters[["Cluster ID", "Name", "Volume (N)", "Failure Stages", "Retrieval Objects"]],
+            use_container_width=True,
+        )
+
         st.markdown("#### Deep-Dive into Cluster Evidence")
-        selected_cid = st.selectbox("Select a Cluster to Inspect:", [c.cluster_id for c in clusters], format_func=lambda x: f"{x} - {next((c.name for c in clusters if c.cluster_id == x), '')}")
+        selected_cid = st.selectbox(
+            "Select a Cluster to Inspect:",
+            [c.cluster_id for c in clusters],
+            format_func=lambda x: f"{x} - {next((c.name for c in clusters if c.cluster_id == x), '')}",
+        )
         selected_cluster = next((c for c in clusters if c.cluster_id == selected_cid), None)
-        
+
         if selected_cluster:
-            st.info(f"**Representative Authentic Quote**: \"{selected_cluster.representative_quote}\"")
-            st.markdown(f"- **Keywords**: `{', '.join(selected_cluster.keywords)}`")
-            st.markdown(f"- **Failure Stage**: `{selected_cluster.failure_stage}`")
-            st.markdown(f"- **Total Associated Records**: `{selected_cluster.size}`")
+            st.info(f"**Description**: {selected_cluster.description}")
+            st.markdown(f"- **Evidence Volume (N)**: `{selected_cluster.evidence_count}` records")
+            st.markdown(f"- **Source Diversity**: `{selected_cluster.source_diversity}` unique platform(s)")
+            st.markdown(f"- **Common Workarounds**: `{', '.join(selected_cluster.common_workarounds)}`")
+            if selected_cluster.unresolved_questions:
+                st.markdown("**Unresolved Behavioral Questions:**")
+                for q in selected_cluster.unresolved_questions:
+                    st.markdown(f"- {q}")
 
 # ----------------- TAB 3: 7D OPPORTUNITY MATRIX -----------------
 with tab3:
     st.subheader("7-Dimensional Opportunity Prioritization Matrix")
     st.caption("Evaluates each problem area across 7 explicit dimensions without arbitrary composite weighting.")
-    
+
     opps = db.get_all_opportunities()
     if opps:
         opp_data = []
@@ -195,11 +205,11 @@ with tab3:
                 "Severity": o.severity_assessment,
                 "Retrieval Impact": f"{o.retrieval_impact_rate * 100:.1f}%",
                 "Workaround": o.workaround_inefficiency,
-                "Confidence": f"{o.evidence_confidence * 100:.1f}%"
+                "Confidence": f"{o.evidence_confidence * 100:.1f}%",
             })
         df_opp = pd.DataFrame(opp_data)
         st.dataframe(df_opp, use_container_width=True)
-        
+
         st.markdown("#### High-Leverage Opportunity Spotlight")
         st.success("**Priority 1: CLUST-01 (Unindexed Screenshot & Document Text)** — N=11, High Inefficiency. Users capture utility bills and receipts but semantic visual search fails to OCR faint or receipt text.")
         st.warning("**Priority 2: CLUST-02 (Temporal Disorientation in Multi-Year Archives)** — N=12, High Inefficiency. Inability to jump to exact year/month ranges in timeline scrubbers without infinite scrolling.")
@@ -209,42 +219,54 @@ with tab3:
 with tab4:
     st.subheader("8 Synthesized Research Findings with Verbatim Provenance")
     findings = db.get_all_findings()
-    
+
     for f in findings:
-        with st.expander(f"📌 {f.finding_id}: {f.title} (Confidence: {f.confidence_score * 100:.0f}%)", expanded=(f.finding_id == "FIND-01")):
+        conf = getattr(f, "confidence_score", 0.9)
+        with st.expander(f"📌 {f.finding_id}: {f.title} (Confidence: {conf * 100:.0f}%)", expanded=(f.finding_id == "FINDING-01")):
             st.markdown(f"**Research Question**: *{f.research_question}*")
             st.markdown(f"**Core Summary**: {f.summary}")
-            
-            st.markdown("##### Verbatim Provenance Evidence:")
-            for ev in f.evidence_citations:
-                st.markdown(f"> *\"{ev.verbatim_quote}\"*  \n> — **[{ev.evidence_id}]** `{ev.source}` ({ev.published_at[:10] if ev.published_at else 'Verified'}) | [Canonical URL]({ev.source_url})")
-            
-            st.markdown("##### Strategic Implications for Core Experience:")
-            for imp in f.strategic_implications:
-                st.markdown(f"- {imp}")
+
+            citations = getattr(f, "citations", [])
+            if citations:
+                st.markdown("##### Verbatim Provenance Evidence:")
+                for ev in citations:
+                    pub = ev.published_at[:10] if ev.published_at else "Verified"
+                    st.markdown(f"> *\"{ev.quote_snippet}\"*  \n> — **[{ev.evidence_id}]** `{ev.source}` ({pub}) | [Canonical URL]({ev.source_url})")
+
+            imp = getattr(f, "implications_for_part2", None)
+            if imp:
+                st.markdown("##### Strategic Implications for Core Experience:")
+                st.markdown(f"{imp}")
 
 # ----------------- TAB 5: LIVE AI CLASSIFIER -----------------
 with tab5:
     st.subheader("Real-Time Relevance & Taxonomy Extraction")
     st.caption("Test authentic user feedback against the 8-variable taxonomy and Problem B classifier.")
-    
+
     sample_texts = [
         "I was searching for my utility receipt from two years ago, typed 'electric bill' and nothing showed up. Had to scroll for 40 minutes.",
         "Google Photos deleted all my photos from my phone when I backed them up, fix this now!",
         "Why can't I search for my dog by color? It only recognizes people faces.",
-        "Scrolled back to 2018 looking for my college trip and the app kept jumping back to today."
+        "Scrolled back to 2018 looking for my college trip and the app kept jumping back to today.",
     ]
-    
-    selected_sample = st.selectbox("Select a Sample Feedback or Enter Custom Below:", ["-- Custom --"] + sample_texts)
-    input_text = st.text_area("User Feedback Statement:", value="" if selected_sample == "-- Custom --" else selected_sample, height=100)
-    
+
+    selected_sample = st.selectbox(
+        "Select a Sample Feedback or Enter Custom Below:",
+        ["-- Custom --"] + sample_texts,
+    )
+    input_text = st.text_area(
+        "User Feedback Statement:",
+        value="" if selected_sample == "-- Custom --" else selected_sample,
+        height=100,
+    )
+
     if st.button("Classify & Extract Taxonomy", type="primary"):
         if not input_text.strip():
             st.error("Please enter a feedback statement.")
         else:
             classifier = RelevanceClassifier()
             is_rel, rel_class, reason, conf = classifier.classify(input_text)
-            
+
             c1, c2, c3 = st.columns(3)
             with c1:
                 st.metric("Relevance Status", "IN SCOPE (Problem B)" if is_rel else "OUT OF SCOPE (Problem A)")
@@ -252,12 +274,16 @@ with tab5:
                 st.metric("Classification", rel_class)
             with c3:
                 st.metric("Confidence", f"{conf * 100:.0f}%")
-                
+
             st.info(f"**Reasoning**: {reason}")
-            
+
             if is_rel:
                 extractor = TaxonomyExtractor()
-                norm = extractor.extract_from_text(input_text, source="Streamlit Interactive Tester", source_url="https://streamlit.io")
+                norm = extractor.extract_from_text(
+                    input_text,
+                    source="Streamlit Interactive Tester",
+                    source_url="https://streamlit.io",
+                )
                 st.markdown("#### Extracted Taxonomy Variables:")
                 st.json({
                     "Retrieval Scenario": norm.retrieval_scenario,
@@ -267,7 +293,7 @@ with tab5:
                     "Search Behavior": norm.search_behavior,
                     "Failure Stage": norm.failure_stage,
                     "Workaround": norm.workaround,
-                    "Outcome": norm.outcome
+                    "Outcome": norm.outcome,
                 })
 
 # ----------------- TAB 6: ARCHITECTURE & CLOUD API -----------------
@@ -278,7 +304,7 @@ with tab6:
     - **Streamlit Community Cloud**: Data science and interactive analytics workbench (`streamlit_app.py`).
     - **Vercel**: High-performance React 18 + Vite PM Analytical Dashboard (`frontend/`).
     - **FastAPI Core**: RESTful API endpoints with interactive Swagger documentation.
-    
+
     #### Core REST API Endpoints:
     - `GET /api/overview` — High-level engine KPIs, source breakdowns, and temporal bounds.
     - `GET /api/clusters` — All 17 emergent HDBSCAN problem clusters.
