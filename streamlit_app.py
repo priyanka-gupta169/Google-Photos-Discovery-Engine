@@ -68,8 +68,8 @@ db = get_database()
 # Sidebar
 with st.sidebar:
     st.image(
-        "https://upload.wikimedia.org/wikipedia/commons/4/4f/Google_Photos_icon_%282020%29.svg",
-        width=64,
+        "https://ssl.gstatic.com/social/photosui/images/logo/photos_logo_color_2x.png",
+        width=72,
     )
     st.markdown("### Google Photos Discovery Engine")
     st.markdown("**NextLeap PM Graduation Project**")

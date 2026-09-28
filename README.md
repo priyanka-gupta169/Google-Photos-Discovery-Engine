@@ -9,7 +9,8 @@
 
 ## 🌐 Live Public Deployment & Repository Links
 
-- **🚀 Live Public Web Application**: [https://trees-start-semi-between.trycloudflare.com/](https://trees-start-semi-between.trycloudflare.com/)
+- **🎈 Live Streamlit Discovery Workbench**: [https://app-photos-discovery-engine-fa3ckmfdn4mudlheyg2yxs.streamlit.app/](https://app-photos-discovery-engine-fa3ckmfdn4mudlheyg2yxs.streamlit.app/)
+- **🚀 Live Public Web Application (Cloudflare)**: [https://trees-start-semi-between.trycloudflare.com/](https://trees-start-semi-between.trycloudflare.com/)
 - **📚 Interactive OpenAPI / Swagger Docs**: [https://trees-start-semi-between.trycloudflare.com/docs](https://trees-start-semi-between.trycloudflare.com/docs)
 - **💻 Official GitHub Repository**: [https://github.com/priyanka-gupta169/Google-Photos-Discovery-Engine](https://github.com/priyanka-gupta169/Google-Photos-Discovery-Engine)
 - **📑 18-Part Part 1 Final Report**: [`docs/part1-discovery-report.md`](docs/part1-discovery-report.md)
