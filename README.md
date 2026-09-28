@@ -9,6 +9,7 @@
 
 ## 🌐 Live Public Deployment & Repository Links
 
+- **⚡ Live React PM Analytical Workbench (Vercel)**: [https://google-photos-ui.vercel.app/](https://google-photos-ui.vercel.app/)
 - **🎈 Live Streamlit Discovery Workbench**: [https://app-photos-discovery-engine-fa3ckmfdn4mudlheyg2yxs.streamlit.app/](https://app-photos-discovery-engine-fa3ckmfdn4mudlheyg2yxs.streamlit.app/)
 - **🚀 Live Public Web Application (Cloudflare)**: [https://trees-start-semi-between.trycloudflare.com/](https://trees-start-semi-between.trycloudflare.com/)
 - **📚 Interactive OpenAPI / Swagger Docs**: [https://trees-start-semi-between.trycloudflare.com/docs](https://trees-start-semi-between.trycloudflare.com/docs)
