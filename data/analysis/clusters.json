@@ -51,7 +51,7 @@
       "What refinement controls could bridge the gap when retrieval relevance fails on initial query?",
       "Are existing metadata tags sufficient to resolve temporal approximate without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.320810+00:00"
+    "created_at": "2026-09-28T01:46:24.355555+00:00"
   },
   {
     "cluster_id": "CLUST-02",
@@ -103,7 +103,7 @@
       "What refinement controls could bridge the gap when retrieval relevance fails on initial query?",
       "Are existing metadata tags sufficient to resolve visual appearance without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.320875+00:00"
+    "created_at": "2026-09-28T01:46:24.355663+00:00"
   },
   {
     "cluster_id": "CLUST-03",
@@ -150,7 +150,7 @@
       "What refinement controls could bridge the gap when retrieval relevance fails on initial query?",
       "Are existing metadata tags sufficient to resolve person or subject without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.320916+00:00"
+    "created_at": "2026-09-28T01:46:24.355750+00:00"
   },
   {
     "cluster_id": "CLUST-04",
@@ -194,7 +194,7 @@
       "What refinement controls could bridge the gap when retrieval relevance fails on initial query?",
       "Are existing metadata tags sufficient to resolve temporal approximate without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.320951+00:00"
+    "created_at": "2026-09-28T01:46:24.355826+00:00"
   },
   {
     "cluster_id": "CLUST-05",
@@ -236,7 +236,7 @@
       "What refinement controls could bridge the gap when retrieval relevance fails on initial query?",
       "Are existing metadata tags sufficient to resolve temporal approximate without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.320982+00:00"
+    "created_at": "2026-09-28T01:46:24.355896+00:00"
   },
   {
     "cluster_id": "CLUST-06",
@@ -278,7 +278,7 @@
       "What refinement controls could bridge the gap when retrieval relevance fails on initial query?",
       "Are existing metadata tags sufficient to resolve spatial or location without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.321023+00:00"
+    "created_at": "2026-09-28T01:46:24.355969+00:00"
   },
   {
     "cluster_id": "CLUST-07",
@@ -318,7 +318,7 @@
       "What refinement controls could bridge the gap when retrieval relevance fails on initial query?",
       "Are existing metadata tags sufficient to resolve temporal approximate without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.321051+00:00"
+    "created_at": "2026-09-28T01:46:24.356033+00:00"
   },
   {
     "cluster_id": "CLUST-08",
@@ -360,7 +360,7 @@
       "What refinement controls could bridge the gap when retrieval relevance fails on initial query?",
       "Are existing metadata tags sufficient to resolve visual appearance without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.321077+00:00"
+    "created_at": "2026-09-28T01:46:24.356097+00:00"
   },
   {
     "cluster_id": "CLUST-09",
@@ -403,7 +403,7 @@
       "What refinement controls could bridge the gap when retrieval relevance fails on initial query?",
       "Are existing metadata tags sufficient to resolve spatial or location without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.321109+00:00"
+    "created_at": "2026-09-28T01:46:24.356172+00:00"
   },
   {
     "cluster_id": "CLUST-10",
@@ -444,7 +444,7 @@
       "What refinement controls could bridge the gap when retrieval relevance fails on initial query?",
       "Are existing metadata tags sufficient to resolve visual appearance without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.321140+00:00"
+    "created_at": "2026-09-28T01:46:24.356233+00:00"
   },
   {
     "cluster_id": "CLUST-11",
@@ -484,7 +484,7 @@
       "What refinement controls could bridge the gap when result evaluation fails on initial query?",
       "Are existing metadata tags sufficient to resolve visual appearance without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.321169+00:00"
+    "created_at": "2026-09-28T01:46:24.356313+00:00"
   },
   {
     "cluster_id": "CLUST-12",
@@ -526,7 +526,7 @@
       "What refinement controls could bridge the gap when result evaluation fails on initial query?",
       "Are existing metadata tags sufficient to resolve temporal approximate without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.321195+00:00"
+    "created_at": "2026-09-28T01:46:24.356377+00:00"
   },
   {
     "cluster_id": "CLUST-13",
@@ -564,7 +564,7 @@
       "What refinement controls could bridge the gap when navigation or discoverability fails on initial query?",
       "Are existing metadata tags sufficient to resolve temporal approximate without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.321220+00:00"
+    "created_at": "2026-09-28T01:46:24.356436+00:00"
   },
   {
     "cluster_id": "CLUST-14",
@@ -602,7 +602,7 @@
       "What refinement controls could bridge the gap when metadata or indexing fails on initial query?",
       "Are existing metadata tags sufficient to resolve person or subject without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.321245+00:00"
+    "created_at": "2026-09-28T01:46:24.356497+00:00"
   },
   {
     "cluster_id": "CLUST-15",
@@ -643,7 +643,7 @@
       "What refinement controls could bridge the gap when navigation or discoverability fails on initial query?",
       "Are existing metadata tags sufficient to resolve temporal approximate without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.321269+00:00"
+    "created_at": "2026-09-28T01:46:24.356558+00:00"
   },
   {
     "cluster_id": "CLUST-16",
@@ -681,7 +681,7 @@
       "What refinement controls could bridge the gap when retrieval relevance fails on initial query?",
       "Are existing metadata tags sufficient to resolve spatial or location without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.321294+00:00"
+    "created_at": "2026-09-28T01:46:24.356622+00:00"
   },
   {
     "cluster_id": "CLUST-17",
@@ -720,6 +720,6 @@
       "What refinement controls could bridge the gap when retrieval relevance fails on initial query?",
       "Are existing metadata tags sufficient to resolve person or subject without manual timeline scrubbing?"
     ],
-    "created_at": "2026-09-27T11:57:33.321320+00:00"
+    "created_at": "2026-09-28T01:46:24.356681+00:00"
   }
 ]
