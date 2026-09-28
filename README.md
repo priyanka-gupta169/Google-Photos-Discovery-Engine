@@ -11,7 +11,7 @@
 
 - **🚀 Live Public Web Application**: [https://trees-start-semi-between.trycloudflare.com/](https://trees-start-semi-between.trycloudflare.com/)
 - **📚 Interactive OpenAPI / Swagger Docs**: [https://trees-start-semi-between.trycloudflare.com/docs](https://trees-start-semi-between.trycloudflare.com/docs)
-- **💻 Official GitHub Repository**: [https://github.com/Ansh-Yadav1605/Google-Photos-Discovery-Engine](https://github.com/Ansh-Yadav1605/Google-Photos-Discovery-Engine)
+- **💻 Official GitHub Repository**: [https://github.com/priyanka-gupta169/Google-Photos-Discovery-Engine](https://github.com/priyanka-gupta169/Google-Photos-Discovery-Engine)
 - **📑 18-Part Part 1 Final Report**: [`docs/part1-discovery-report.md`](docs/part1-discovery-report.md)
 
 ---
@@ -159,7 +159,7 @@ google-photos-discovery-engine/
 ### 1. Clone & Configure Environment
 ```bash
 # Clone the repository
-git clone https://github.com/Ansh-Yadav1605/Google-Photos-Discovery-Engine.git
+git clone https://github.com/priyanka-gupta169/Google-Photos-Discovery-Engine.git
 cd Google-Photos-Discovery-Engine
 
 # Create virtual environment
@@ -208,7 +208,7 @@ The repository includes production manifests for zero-friction cloud deployment:
 
 ### Option B: Railway Deployment
 1. Log in to [railway.app](https://railway.app) and select **New Project** → **Deploy from GitHub repo**.
-2. Select `Ansh-Yadav1605/Google-Photos-Discovery-Engine`.
+2. Select `priyanka-gupta169/Google-Photos-Discovery-Engine`.
 3. Railway automatically detects `railway.json` and `Dockerfile`.
 4. In **Variables**, add:
    - `GROQ_API_KEY`: `your_groq_api_key`
@@ -217,7 +217,7 @@ The repository includes production manifests for zero-friction cloud deployment:
 
 ### Option C: Render Deployment
 1. Log in to [render.com](https://render.com) and select **New** → **Blueprint**.
-2. Connect `Ansh-Yadav1605/Google-Photos-Discovery-Engine`.
+2. Connect `priyanka-gupta169/Google-Photos-Discovery-Engine`.
 3. Render automatically reads `render.yaml` and deploys the web service.
 4. Set `GROQ_API_KEY` in the Render dashboard.
 
