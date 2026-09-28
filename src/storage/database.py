@@ -14,7 +14,7 @@ from src.models.synthesis import FindingResult
 class DatabaseManager:
     """Manages SQLite storage for normalized evidence, problem clusters, and opportunity matrix."""
 
-    def __init__(self, db_path: Optional[Path] = None):
+    def __init__(self, db_path: Optional[Path] = None, auto_seed: bool = False):
         if db_path:
             self.db_path = db_path
         else:
@@ -27,6 +27,8 @@ class DatabaseManager:
 
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.init_db()
+        if auto_seed:
+            self.ensure_seeded()
 
     def get_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(str(self.db_path))
@@ -141,6 +143,41 @@ class DatabaseManager:
                 "CREATE INDEX IF NOT EXISTS idx_opp_cluster ON opportunity_matrix(cluster_id)"
             )
             conn.commit()
+
+    def ensure_seeded(self):
+        """Auto-seed database from data/seeds/seed_data.json if tables are empty."""
+        try:
+            with self.get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT COUNT(*) FROM evidence")
+                count = cursor.fetchone()[0]
+                if count > 0:
+                    return
+
+            seed_file = Path(__file__).resolve().parent.parent.parent / "data" / "seeds" / "seed_data.json"
+            if not seed_file.exists():
+                return
+
+            with open(seed_file, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+
+            ev_records = [NormalizedEvidenceRecord.model_validate(x) for x in payload.get("evidence", [])]
+            cl_records = [ProblemCluster.model_validate(x) for x in payload.get("clusters", [])]
+            op_records = [OpportunityArea.model_validate(x) for x in payload.get("opportunities", [])]
+            fn_records = [FindingResult.model_validate(x) for x in payload.get("findings", [])]
+
+            if ev_records:
+                self.save_evidence_records(ev_records)
+            if cl_records:
+                self.save_clusters(cl_records)
+            if op_records:
+                self.save_opportunities(op_records)
+            if fn_records:
+                self.save_findings(fn_records)
+
+            logger.info(f"Database auto-seeded from seed_data.json: {len(ev_records)} evidence, {len(cl_records)} clusters.")
+        except Exception as e:
+            logger.warning(f"Could not auto-seed database: {e}")
 
     def save_evidence_records(self, records: List[NormalizedEvidenceRecord]):
         """Upsert normalized evidence records into the database."""

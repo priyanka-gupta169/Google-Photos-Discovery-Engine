@@ -13,6 +13,7 @@
 - **📚 Interactive OpenAPI / Swagger Docs**: [https://trees-start-semi-between.trycloudflare.com/docs](https://trees-start-semi-between.trycloudflare.com/docs)
 - **💻 Official GitHub Repository**: [https://github.com/priyanka-gupta169/Google-Photos-Discovery-Engine](https://github.com/priyanka-gupta169/Google-Photos-Discovery-Engine)
 - **📑 18-Part Part 1 Final Report**: [`docs/part1-discovery-report.md`](docs/part1-discovery-report.md)
+- **☁️ Streamlit & Vercel Cloud Deployment Plan**: [`docs/deployment-plan.md`](docs/deployment-plan.md)
 
 ---
 
@@ -89,10 +90,13 @@ google-photos-discovery-engine/
 ├── render.yaml                     # Render Blueprint specification
 ├── requirements.txt                # Python backend dependencies
 ├── app.py                          # Unified server entrypoint (FastAPI + React SPA)
+├── streamlit_app.py                # Streamlit Cloud Analytics & LLM Workbench
+├── vercel.json                     # Root Vercel build configuration
 ├── run_tests.py                    # Master automated test runner (48 tests)
 ├── README.md                       # Comprehensive project & deployment guide
 │
 ├── docs/                           # Formal Research & Architectural Documentation
+│   ├── deployment-plan.md          # Streamlit (Backend) & Vercel (Frontend) guide
 │   ├── problemStatement.txt        # Concise problem statement & graduation brief
 │   ├── context.md                  # Project context, research questions, non-goals
 │   ├── architecture.md             # Detailed system architecture with Mermaid diagrams
@@ -197,9 +201,22 @@ python app.py
 
 ## 5. Public Cloud Deployment Guide
 
-The repository includes production manifests for zero-friction cloud deployment:
+The repository includes production manifests for zero-friction cloud deployment (see full details in [`docs/deployment-plan.md`](docs/deployment-plan.md)):
 
-### Option A: Cloudflare Tunnel (Instant Public HTTPS)
+### Option A: Streamlit Community Cloud (Backend & Data Science Workbench)
+1. Sign in to [share.streamlit.io](https://share.streamlit.io) via GitHub.
+2. Click **New app** and select `priyanka-gupta169/Google-Photos-Discovery-Engine`.
+3. Set **Main file path** to `streamlit_app.py` and click **Deploy**.
+4. In **Settings** → **Secrets**, add `GROQ_API_KEY = "your_key"`.
+*Auto-seeds the analytical SQLite database with all 72 evidence items, 17 clusters, and 8 findings on boot.*
+
+### Option B: Vercel Cloud (React 18 + Vite PM Analytical Dashboard)
+1. Sign in to [vercel.com](https://vercel.com) via GitHub.
+2. Click **Add New...** → **Project** and import `priyanka-gupta169/Google-Photos-Discovery-Engine`.
+3. Set **Root Directory** to `frontend` (or leave default root `.`).
+4. Click **Deploy**. Vercel serves the high-performance React 18 SPA globally with zero configuration.
+
+### Option C: Cloudflare Tunnel (Instant Public HTTPS)
 ```bash
 # Expose running local application to the public internet securely
 .\cloudflared.exe tunnel --url http://127.0.0.1:8000
