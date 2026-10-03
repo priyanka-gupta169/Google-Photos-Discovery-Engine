@@ -116,8 +116,16 @@ tab_mvp, tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 
 # ----------------- TAB MVP: MEMORY RETRIEVAL ASSISTANT -----------------
 with tab_mvp:
-    st.markdown("### 📸 Google Photos Memory Retrieval Assistant (Part 5 MVP)")
-    st.caption("AI-Native Prototype testing episodic memory retrieval over a controlled representative dataset (N=40). Grounded in Part 4 Problem Definition.")
+    st.markdown("## 📸 AI Memory Retrieval Assistant")
+    st.markdown("##### Can't remember the exact date or filename? Tell me what you remember about the photo.")
+    st.markdown(
+        "Describe the people, place, approximate time, event, appearance, or anything else you remember. "
+        "The AI will turn your memory into searchable clues and help you narrow down the results."
+    )
+    st.warning(
+        "⚠️ **Prototype Notice**: This is an experimental prototype using a controlled representative photo dataset (40 photos). "
+        "It does **not** access your personal Google Photos."
+    )
 
     if "mvp_engine" not in st.session_state:
         st.session_state.mvp_engine = MemoryRetrievalEngine()
@@ -134,11 +142,11 @@ with tab_mvp:
     if "mvp_session_outcome" not in st.session_state:
         st.session_state.mvp_session_outcome = None
 
-    # Task Picker
+    # Task Picker (Benchmark Scenarios + Freeform)
     task_options = [
-        "Task 1: Fuzzy Travel Memory (R7 & R8) — Trip to Goa with Rohan ~3 years ago",
-        "Task 2: Utility Document (R12 & CLUST-06) — University marksheet scan ~2022",
-        "Task 3: Visual Collision (R9 & R14) — Ramp walk in black and gold dress",
+        "Task 1: Fuzzy Travel Memory — Trip to Goa with Rohan ~3 years ago",
+        "Task 2: Utility Document — University marksheet / grade-sheet scan ~2022",
+        "Task 3: Visual Collision — Ramp walk in black and gold dress",
         "Freeform Memory Search",
     ]
     task_prompts = {
@@ -154,22 +162,27 @@ with tab_mvp:
         task_options[3]: None,
     }
 
-    selected_task_label = st.selectbox("Select Evaluation Task (Part 3 & 4 Research Grounding):", task_options)
+    selected_task_label = st.selectbox(
+        "Select a test scenario (or try your own in Freeform):",
+        task_options,
+        help="Select a scenario to pre-fill a realistic episodic memory, or select Freeform to test your own phrasing."
+    )
     default_prompt = task_prompts[selected_task_label]
     target_id = task_targets[selected_task_label]
 
     user_query = st.text_area(
-        "Describe what you remember about the photo:",
+        "Tell me what you remember",
         value=default_prompt,
-        height=75,
+        placeholder="I remember a Goa trip with Rohan around 3 years ago, near sunset...",
+        height=85,
         help="Use natural language: mention people, approximate timeframe, location, activity, or visual styling.",
     )
 
-    col_btn1, col_btn2 = st.columns([1, 4])
+    col_btn1, col_btn2 = st.columns([1, 2])
     with col_btn1:
         search_clicked = st.button("🔍 Search Memories", type="primary", use_container_width=True)
     with col_btn2:
-        if st.button("🔄 Reset Session", use_container_width=False):
+        if st.button("🔄 Reset Search", use_container_width=False, help="Start a new photo search and clear the current memory and results."):
             st.session_state.mvp_cues = None
             st.session_state.mvp_candidates = []
             st.session_state.mvp_rejected_ids = []
@@ -180,42 +193,58 @@ with tab_mvp:
 
     if search_clicked and user_query.strip():
         st.session_state.mvp_attempts += 1
-        with st.spinner("Extracting structured memory cues..."):
+        with st.spinner("Translating your memory into structured cues..."):
             extracted = extract_memory_cues(user_query)
             st.session_state.mvp_cues = extracted.cues
             res = st.session_state.mvp_engine.search(extracted.cues, rejected_ids=st.session_state.mvp_rejected_ids)
             st.session_state.mvp_candidates = res.results
 
-    # Extracted Cues Display
+    # What I Understood Section
     if st.session_state.mvp_cues:
         cues = st.session_state.mvp_cues
-        st.markdown("#### 🧩 Extracted Memory Cues")
-        cue_badges = []
-        if cues.approximate_time:
-            cue_badges.append(f"🕒 **Time**: {cues.approximate_time}")
-        if cues.companions:
-            cue_badges.append(f"👤 **Person**: {', '.join(cues.companions)}")
-        if cues.location:
-            cue_badges.append(f"📍 **Setting**: {cues.location}")
-        if cues.activity:
-            cue_badges.append(f"🎯 **Activity**: {cues.activity}")
-        if cues.visual_attributes:
-            cue_badges.append(f"🎨 **Visuals**: {', '.join(cues.visual_attributes)}")
-        if cues.text_ocr:
-            cue_badges.append(f"📄 **Text**: {cues.text_ocr}")
-        st.info(" • ".join(cue_badges) if cue_badges else "No specific cues extracted yet.")
-
-    # Candidate Results
-    if st.session_state.mvp_candidates:
-        st.markdown(f"#### 🖼️ Candidate Photos ({len(st.session_state.mvp_candidates)} matches)")
+        st.markdown("### 🧠 What I understood")
+        st.caption("The AI translated your memory into multiple retrieval cues to search the archive:")
         
-        # Refinement section
-        st.markdown("##### 🔍 Iterative Refinement (If the intended photo is not first or missing):")
+        cue_lines = []
+        if cues.companions:
+            cue_lines.append(f"**👤 Person**: {', '.join(cues.companions)}")
+        if cues.location:
+            cue_lines.append(f"**📍 Location**: {cues.location}")
+        if cues.approximate_time:
+            cue_lines.append(f"**🕒 Approximate time**: {cues.approximate_time}")
+        if cues.visual_attributes:
+            cue_lines.append(f"**🎨 Visual clue**: {', '.join(cues.visual_attributes)}")
+        if cues.activity:
+            cue_lines.append(f"**🎯 Activity / Event**: {cues.activity}")
+        if cues.text_ocr:
+            cue_lines.append(f"**📄 Document / Text**: {cues.text_ocr}")
+        if cues.uncertainty:
+            cue_lines.append(f"**❓ Note**: {cues.uncertainty}")
+
+        st.info("  \n".join(cue_lines) if cue_lines else "Interpreting general scene context...")
+
+    # Search Results & Refinement Section
+    if st.session_state.mvp_candidates:
+        st.markdown(f"### 🖼️ Search Results ({len(st.session_state.mvp_candidates)} matching photos)")
+        
+        # Primary Differentiator: Iterative Refinement
+        st.markdown("---")
+        st.markdown("#### 🔍 Didn't find the exact photo? Add another clue.")
+        st.markdown(
+            "Add anything else you remember — what was happening, what someone was wearing, "
+            "where you were, what the photo looked like, or another approximate time/place clue. "
+            "*New clues are merged with your existing memory to narrow down the results without starting over.*"
+        )
         refine_col1, refine_col2 = st.columns([3, 1])
         with refine_col1:
-            refine_input = st.text_input("Add another detail (e.g. 'He was wearing a black jacket', 'Outdoors on stage'):", key="mvp_refine_input")
+            refine_input = st.text_input(
+                "Add another clue:",
+                placeholder="e.g., It was on an auditorium stage under spotlights, or he was wearing a blue shirt...",
+                key="mvp_refine_input",
+                label_visibility="collapsed"
+            )
         with refine_col2:
-            if st.button("Apply New Clue", use_container_width=True) and refine_input.strip():
+            if st.button("Apply New Clue", type="secondary", use_container_width=True) and refine_input.strip():
                 st.session_state.mvp_refinements += 1
                 st.session_state.mvp_attempts += 1
                 refine_res = st.session_state.mvp_engine.refine(
@@ -225,10 +254,10 @@ with tab_mvp:
                 )
                 st.session_state.mvp_cues = refine_res.updated_cues
                 st.session_state.mvp_candidates = refine_res.results
-                st.success(refine_res.system_message)
+                st.success("Refined search with your additional clue!")
                 st.rerun()
 
-        # Display candidates in columns
+        # Display candidates in cards
         for idx, cand in enumerate(st.session_state.mvp_candidates[:6]):
             p = cand.photo
             with st.container():
@@ -237,24 +266,25 @@ with tab_mvp:
                 with c_img:
                     st.image(p.thumbnail_url, use_container_width=True)
                 with c_info:
-                    st.markdown(f"**{p.title}** ({p.approx_year})")
+                    st.markdown(f"##### {p.title} ({p.approx_year})")
                     st.caption(f"Category: {p.category} | Location: {p.location}")
                     st.markdown(f"*{p.description}*")
                     
-                    st.markdown("**Why it matched:**")
-                    for r in cand.match_reasons[:3]:
-                        st.markdown(f"- {r}")
+                    st.markdown("**Why this result?**")
+                    for r in cand.match_reasons[:4]:
+                        clean_r = r.replace("✓", "").strip()
+                        st.markdown(f"- ✓ {clean_r}")
                     
                     btn_col1, btn_col2 = st.columns(2)
                     with btn_col1:
                         if st.button(f"✓ This is the photo", key=f"confirm_{p.id}"):
                             st.session_state.mvp_session_outcome = ("SUCCESS", p.id)
-                            st.success(f"🎉 Target found: **{p.title}**!")
+                            st.success(f"🎉 Selected: **{p.title}**!")
                             if target_id and p.id == target_id:
                                 st.balloons()
-                                st.info("✓ Ground-truth target matched for evaluation task!")
+                                st.info("✓ Intended photo successfully retrieved!")
                     with btn_col2:
-                        if st.button(f"✕ Not this", key=f"reject_{p.id}"):
+                        if st.button(f"✕ Not this photo", key=f"reject_{p.id}"):
                             st.session_state.mvp_rejected_ids.append(p.id)
                             st.session_state.mvp_refinements += 1
                             refine_res = st.session_state.mvp_engine.refine(
@@ -263,7 +293,7 @@ with tab_mvp:
                                 rejected_photo_ids=st.session_state.mvp_rejected_ids,
                             )
                             st.session_state.mvp_candidates = refine_res.results
-                            st.warning(f"Excluded {p.id}. Re-ranked candidate pool.")
+                            st.info(f"Removed this photo from suggestions. Using this feedback to narrow your search.")
                             st.rerun()
 
         # Abandonment option

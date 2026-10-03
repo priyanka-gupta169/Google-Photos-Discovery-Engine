@@ -127,7 +127,7 @@ $$\text{Composite Score} = S_{\text{companion}} + S_{\text{time}} + S_{\text{loc
 8. **Negative Exclusion Penalty ($-20.0$):** Immediate exclusion of candidates explicitly marked `"Not this"`.
 
 ### Human-Readable Match Rationales
-Rather than showing opaque machine learning scores (e.g., `0.8427`), the user interface renders clear explanation badges:
+Rather than showing opaque machine learning scores (e.g., `0.8427`), the user interface renders clear explanation badges under "Why this result?":
 - `✓ Companion: Rohan`
 - `✓ Approx. Time: ~2023 (About 3 years ago)`
 - `✓ Location / Setting: Goa, Vagator Beach`
@@ -138,11 +138,11 @@ Rather than showing opaque machine learning scores (e.g., `0.8427`), the user in
 ## 6. Iterative Refinement & Disambiguation Loop
 
 When the initial candidate pool contains visual collisions or distractor photos:
-1. User clicks **"Not this"** on an incorrect candidate.
-2. System immediately applies a $-20.0$ penalty to that photo ID.
-3. User adds an additional clue (e.g., `"It was on the auditorium stage under spotlights with Maya"`).
+1. User clicks **"✕ Not this photo"** on an incorrect candidate.
+2. System immediately removes the photo from active suggestions and applies the negative exclusion penalty to that candidate ID.
+3. User adds an additional clue via the **"Didn't find the exact photo? Add another clue"** section (e.g., `"It was on the auditorium stage under spotlights with Maya"`).
 4. System merges new cues with previous memory state (`updated_cues = previous_cues + new_cues`).
-5. All candidates are re-scored against the enriched cue set.
+5. All candidates are re-scored against the enriched cue set without restarting search from scratch.
 6. Target photo advances to Rank #1, while the distractor is suppressed.
 
 ---
