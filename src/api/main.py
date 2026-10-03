@@ -101,6 +101,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from src.api.mvp import router as mvp_router
+app.include_router(mvp_router)
+
 
 def get_db() -> DatabaseManager:
     """Dependency provider for database manager."""

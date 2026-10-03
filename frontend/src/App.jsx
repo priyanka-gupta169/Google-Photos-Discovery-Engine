@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import MemoryAssistant from "./MemoryAssistant.jsx";
 
 // ==============================================================================
 // FALLBACK DATA (Guarantees zero blank screen if API is loading or offline)
@@ -418,6 +419,7 @@ const FALLBACK_EVIDENCE = [
 // MAIN APP COMPONENT
 // ==============================================================================
 export default function App() {
+  const [appMode, setAppMode] = useState("mvp"); // Default view is Part 5 MVP!
   const [activeTab, setActiveTab] = useState("overview");
   const [overview, setOverview] = useState(FALLBACK_OVERVIEW);
   const [clusters, setClusters] = useState(FALLBACK_CLUSTERS);
@@ -533,6 +535,10 @@ export default function App() {
     }
   };
 
+  if (appMode === "mvp") {
+    return <MemoryAssistant onSwitchToWorkbench={() => setAppMode("workbench")} />;
+  }
+
   return (
     <div className="app-container">
       {/* 1. TOP NAVBAR */}
@@ -573,6 +579,14 @@ export default function App() {
         </nav>
 
         <div className="navbar-actions">
+          <button
+            className="btn btn-primary"
+            style={{ backgroundColor: "var(--accent-google-blue)", color: "#fff", fontWeight: "700" }}
+            onClick={() => setAppMode("mvp")}
+          >
+            <span>✨</span>
+            <span>Switch to Memory Assistant MVP</span>
+          </button>
           <div className="status-pill">
             <div className="status-dot"></div>
             <span>FastAPI + Groq Online</span>
