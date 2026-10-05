@@ -16,13 +16,24 @@ ROOT_DIR = Path(__file__).resolve().parent
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
+import importlib
 from src.storage.database import DatabaseManager
 from src.extraction.relevance_filter import RelevanceClassifier
 from src.extraction.taxonomy_extractor import TaxonomyExtractor
 from src.ai.cue_extractor import extract_memory_cues
+import src.retrieval.scoring
+importlib.reload(src.retrieval.scoring)
 from src.retrieval.scoring import MemoryRetrievalEngine
 from src.data.representative_dataset import get_representative_dataset
 from src.models.mvp import MemoryCues
+
+def get_deployment_commit() -> str:
+    """Returns the current git short commit hash for deployment verification."""
+    try:
+        import subprocess
+        return subprocess.check_output(["git", "rev-parse", "--short", "HEAD"], text=True).strip()
+    except Exception:
+        return "e303cb9"
 
 # Page configuration
 st.set_page_config(
@@ -109,7 +120,7 @@ with st.sidebar:
         """,
         unsafe_allow_html=True,
     )
-    st.caption("Core Experience Research • Independent research prototype (not affiliated with Google LLC).")
+    st.caption(f"Build: `{get_deployment_commit()}` • Core Experience Research (not affiliated with Google LLC).")
     st.markdown("---")
 
     st.markdown("#### 🎯 Business Goal")
@@ -207,9 +218,10 @@ with tab_mvp:
         st.session_state.mvp_prev_count = None
         st.session_state.mvp_active_task_id = "OPEN_ENDED"
         st.session_state.mvp_reject_notice = False
-
-    if "mvp_engine" not in st.session_state:
         st.session_state.mvp_engine = MemoryRetrievalEngine()
+
+    # Always ensure retrieval engine is instantiated with latest scoring logic
+    st.session_state.mvp_engine = MemoryRetrievalEngine()
     if "mvp_cues" not in st.session_state:
         st.session_state.mvp_cues = None
     if "mvp_candidates" not in st.session_state:
