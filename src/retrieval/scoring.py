@@ -54,15 +54,39 @@ class MemoryRetrievalEngine:
         # ----------------------------------------------------------------------
         photo_people_lower = [p.lower() for p in photo.people]
         photo_desc_lower = photo.description.lower()
+        photo_title_lower = photo.title.lower()
+
+        FAMILY_RELATIONS = {"family", "parents", "mother", "father", "sister", "brother", "cousins", "cousin", "relatives"}
 
         for comp in cues.companions:
             comp_lower = comp.lower()
+            matched_companion = False
+
+            # Check direct companion list match
             if any(comp_lower in p or p in comp_lower for p in photo_people_lower):
                 score += 3.0
                 match_reasons.append(f"✓ Companion: {comp}")
-            elif comp_lower in photo_desc_lower:
-                score += 2.0
-                match_reasons.append(f"✓ Companion mentioned in context: {comp}")
+                matched_companion = True
+            # Natural family relationship hypernym: 'family' matches specific family members
+            elif comp_lower == "family" and any(any(rel in p for rel in FAMILY_RELATIONS) for p in photo_people_lower):
+                matched_members = [p for p in photo.people if any(rel in p.lower() for rel in FAMILY_RELATIONS)]
+                score += 3.0
+                match_reasons.append(f"✓ Family member: {', '.join(matched_members)}")
+                matched_companion = True
+
+            # Mentioned in title or description if not already matched
+            if not matched_companion:
+                if comp_lower in photo_title_lower:
+                    score += 2.5
+                    match_reasons.append(f"✓ Mentioned in photo title: {comp}")
+                elif comp_lower in photo_desc_lower:
+                    score += 2.0
+                    match_reasons.append(f"✓ Companion mentioned in context: {comp}")
+
+            # Modest category relevance alignment for Social & Family when querying family
+            if comp_lower == "family" and photo.category == "Social & Family":
+                score += 1.5
+                match_reasons.append("✓ Category: Social & Family")
 
         # ----------------------------------------------------------------------
         # 2. Approximate Temporal Match (+2.5 exact year, +1.5 tolerance, +0.5 season)
@@ -90,7 +114,7 @@ class MemoryRetrievalEngine:
             if loc_lower in photo_loc_lower or photo_loc_lower in loc_lower:
                 score += 2.5
                 match_reasons.append(f"✓ Location / Setting: {photo.location}")
-            elif any(token in photo_loc_lower or token in photo_desc_lower for token in loc_lower.split()):
+            elif any(token in photo_loc_lower or token in photo_desc_lower or token in photo_title_lower for token in loc_lower.split()):
                 score += 1.5
                 match_reasons.append(f"✓ Setting overlap: {cues.location}")
 
@@ -103,7 +127,7 @@ class MemoryRetrievalEngine:
             if act_lower in photo_act_lower or photo_act_lower in act_lower:
                 score += 2.5
                 match_reasons.append(f"✓ Activity / Event: {photo.activity}")
-            elif any(token in photo_act_lower or token in photo_desc_lower for token in act_lower.split() if len(token) > 3):
+            elif any(token in photo_act_lower or token in photo_desc_lower or token in photo_title_lower for token in act_lower.split() if len(token) > 3):
                 score += 1.5
                 match_reasons.append(f"✓ Activity context: {cues.activity}")
 
