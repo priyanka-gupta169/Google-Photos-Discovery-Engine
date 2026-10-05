@@ -632,7 +632,7 @@ export default function App() {
             <div className="glass-panel" style={{ padding: "24px", marginBottom: "24px", background: "linear-gradient(135deg, rgba(66, 133, 244, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "20px" }}>
                 <div>
-                  <h2 style={{ fontSize: "1.3rem", marginBottom: "8px" }}>NextLeap Graduation Project — Core Experience Discovery</h2>
+                  <h2 style={{ fontSize: "1.3rem", marginBottom: "8px" }}>Photo Retrieval Research Prototype — Core Experience Research</h2>
                   <p style={{ color: "var(--text-secondary)", fontSize: "0.88rem", maxWidth: "880px", lineHeight: "1.6" }}>
                     <strong>Business Goal:</strong> Increase the percentage of users who successfully retrieve a photo they remember but cannot precisely describe when they start searching.<br />
                     <strong>Core Epistemic Constraint:</strong> Inductive, evidence-driven product discovery. Strictly forbids jumping to predetermined features (conversational AI, redesigns) or synthetic single-score prioritization.
@@ -849,7 +849,7 @@ export default function App() {
             <div className="glass-panel" style={{ padding: "16px 20px", marginBottom: "20px", borderLeft: "4px solid var(--accent-google-yellow)" }}>
               <h3 style={{ fontSize: "1rem", color: "#FDE68A", marginBottom: "4px" }}>Strict Multi-Dimensional Transparency Principle</h3>
               <p style={{ fontSize: "0.82rem", color: "var(--text-secondary)" }}>
-                In compliance with NextLeap graduation guidelines, opportunity areas are evaluated across 7 independent evidence dimensions. 
+                In compliance with research methodology guidelines, opportunity areas are evaluated across 7 independent evidence dimensions. 
                 Arbitrary composite "winner" scores or rankings are strictly forbidden to preserve unbiased human PM discovery.
               </p>
             </div>

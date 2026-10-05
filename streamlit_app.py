@@ -6,6 +6,7 @@ Executive Discovery & Retrieval Friction Analytical Workbench
 
 import sys
 import os
+import re
 from pathlib import Path
 import pandas as pd
 import streamlit as st
@@ -30,6 +31,18 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+def append_keyword_to_query(current_text: str, keyword: str) -> str:
+    """Appends a keyword to the current query string, avoiding duplicates."""
+    current = (current_text or "").strip()
+    if not current:
+        return keyword
+    if re.search(rf"\b{re.escape(keyword)}\b", current, re.IGNORECASE):
+        return current
+    if current.endswith(",") or current.endswith(", "):
+        return f"{current.rstrip(', ')}, {keyword}"
+    return f"{current}, {keyword}"
+
 
 # Custom Styling
 st.markdown(
@@ -76,8 +89,8 @@ with st.sidebar:
         width=72,
     )
     st.markdown("### Google Photos Discovery Engine")
-    st.markdown("**NextLeap PM Graduation Project**")
-    st.markdown("*Core Experience Team*")
+    st.markdown("**Photo Retrieval Research Prototype**")
+    st.markdown("*Core Experience Research*")
     st.markdown("---")
 
     st.markdown("#### 🎯 Business Goal")
@@ -159,18 +172,41 @@ with tab_mvp:
         st.session_state.mvp_active_task_id = "OPEN_ENDED"
     if "mvp_query_input" not in st.session_state:
         st.session_state.mvp_query_input = ""
+    if "mvp_main_search_textarea" not in st.session_state:
+        st.session_state.mvp_main_search_textarea = st.session_state.mvp_query_input
     if "mvp_reject_notice" not in st.session_state:
         st.session_state.mvp_reject_notice = False
 
+    if st.session_state.get("mvp_scroll_to_search", False):
+        st.session_state.mvp_scroll_to_search = False
+        st.components.v1.html(
+            """
+            <script>
+            setTimeout(function() {
+                var el = window.parent.document.querySelector('textarea[aria-label="What photo are you trying to find?"]');
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.focus();
+                }
+            }, 100);
+            </script>
+            """,
+            height=0,
+        )
+
     # Primary Open-Ended Search Input Bar
     st.markdown("### What photo are you trying to find?")
-    
+    if st.session_state.mvp_active_task_id != "OPEN_ENDED":
+        st.info(
+            f"🎯 **Controlled Benchmark Loaded ({st.session_state.mvp_active_task_id})**: "
+            "You can freely edit this memory in the box below before clicking **Search Memories**."
+        )
+
     user_query = st.text_area(
         "What photo are you trying to find?",
-        value=st.session_state.mvp_query_input,
+        key="mvp_main_search_textarea",
         placeholder="I remember a photo of a mountain from a trip...",
         height=85,
-        key="mvp_main_search_textarea",
         label_visibility="collapsed",
         help="Use natural language: describe anything you remember.",
     )
@@ -179,20 +215,22 @@ with tab_mvp:
     st.caption("Not sure what to type? Try something like:")
     chip_cols = st.columns(8)
     chips_data = [
-        ("🏔️ Mountain", "I remember a photo of a mountain from a trip"),
-        ("🪔 Navratri", "Navratri photos in traditional outfit"),
-        ("🏖️ Beach", "Trip to the beach with friends around sunset"),
-        ("🐶 Dog", "A sunny day with the dog in the park"),
-        ("🎂 Birthday", "Birthday cake cutting party with friends"),
-        ("🌅 Sunset", "A beautiful sunset near the water"),
-        ("👨‍👩‍👧 Family", "Family holiday celebration"),
-        ("🎓 College", "College days with my friends"),
+        ("🏔️ Mountain", "Mountain"),
+        ("🪔 Navratri", "Navratri"),
+        ("🏖️ Beach", "Beach"),
+        ("🐶 Dog", "Dog"),
+        ("🎂 Birthday", "Birthday"),
+        ("🌅 Sunset", "Sunset"),
+        ("👨‍👩‍👧 Family", "Family"),
+        ("🎓 College", "College"),
     ]
-    for i, (label, prompt_text) in enumerate(chips_data):
+    for i, (label, kw) in enumerate(chips_data):
         with chip_cols[i]:
             if st.button(label, key=f"chip_btn_{i}", use_container_width=True):
-                st.session_state.mvp_query_input = prompt_text
-                st.session_state.mvp_active_task_id = "OPEN_ENDED"
+                current_text = st.session_state.get("mvp_main_search_textarea", "")
+                new_text = append_keyword_to_query(current_text, kw)
+                st.session_state.mvp_main_search_textarea = new_text
+                st.session_state.mvp_query_input = new_text
                 st.rerun()
 
     st.markdown(
@@ -214,17 +252,19 @@ with tab_mvp:
             st.session_state.mvp_has_searched = False
             st.session_state.mvp_prev_count = None
             st.session_state.mvp_query_input = ""
+            st.session_state.mvp_main_search_textarea = ""
             st.session_state.mvp_active_task_id = "OPEN_ENDED"
             st.session_state.mvp_reject_notice = False
             st.rerun()
 
-    if search_clicked and user_query.strip():
+    query_to_search = user_query.strip() if user_query else ""
+    if search_clicked and query_to_search:
         st.session_state.mvp_attempts += 1
         st.session_state.mvp_prev_count = None
-        st.session_state.mvp_query_input = user_query
+        st.session_state.mvp_query_input = query_to_search
         st.session_state.mvp_reject_notice = False
         with st.spinner("Translating your memory into structured cues..."):
-            extracted = extract_memory_cues(user_query)
+            extracted = extract_memory_cues(query_to_search)
             st.session_state.mvp_cues = extracted.cues
             res = st.session_state.mvp_engine.search(extracted.cues, rejected_ids=st.session_state.mvp_rejected_ids)
             st.session_state.mvp_candidates = res.results
@@ -378,8 +418,12 @@ with tab_mvp:
     # ----------------- SECONDARY SECTION: RESEARCH BENCHMARK TASKS -----------------
     st.markdown("---")
     st.markdown("### 🧪 Research Benchmark Tasks")
-    st.caption(
-        "These are controlled scenarios used for usability testing. You can use them if you're participating in the research study."
+    st.markdown("These are controlled scenarios for usability testing.")
+    st.markdown(
+        "<p style='color: #94a3b8; font-size: 0.88rem; margin-bottom: 12px;'>"
+        "<strong>How to use:</strong> 1. Load a task &nbsp;•&nbsp; 2. Edit it if you want &nbsp;•&nbsp; 3. Search Memories &nbsp;•&nbsp; 4. Review and refine the results"
+        "</p>",
+        unsafe_allow_html=True,
     )
 
     bench_col1, bench_col2, bench_col3 = st.columns(3)
@@ -387,39 +431,48 @@ with tab_mvp:
         st.markdown("**Task 1 — Fuzzy Travel Memory**")
         st.caption("Trip to Goa with friend Rohan ~3 years ago. No exact date.")
         if st.button("Load Task 1", use_container_width=True):
-            st.session_state.mvp_query_input = "Trip to Goa with my friend Rohan around 3 years back at a beach sunset"
+            prompt_t1 = "I remember a photo from a Goa trip with my friend Rohan around 3 years ago. I don't remember the exact date."
+            st.session_state.mvp_main_search_textarea = prompt_t1
+            st.session_state.mvp_query_input = prompt_t1
             st.session_state.mvp_active_task_id = "TASK-1"
             st.session_state.mvp_cues = None
             st.session_state.mvp_candidates = []
             st.session_state.mvp_rejected_ids = []
             st.session_state.mvp_has_searched = False
             st.session_state.mvp_prev_count = None
+            st.session_state.mvp_scroll_to_search = True
             st.rerun()
 
     with bench_col2:
         st.markdown("**Task 2 — University Marksheet**")
         st.caption("Saved degree marksheet / transcript scan from college ~2022.")
         if st.button("Load Task 2", use_container_width=True):
-            st.session_state.mvp_query_input = "I need to find my university marksheet or degree certificate from college around 2022"
+            prompt_t2 = "I remember a university marksheet or grade-sheet scan from around 2022. I don't remember the exact date or filename."
+            st.session_state.mvp_main_search_textarea = prompt_t2
+            st.session_state.mvp_query_input = prompt_t2
             st.session_state.mvp_active_task_id = "TASK-2"
             st.session_state.mvp_cues = None
             st.session_state.mvp_candidates = []
             st.session_state.mvp_rejected_ids = []
             st.session_state.mvp_has_searched = False
             st.session_state.mvp_prev_count = None
+            st.session_state.mvp_scroll_to_search = True
             st.rerun()
 
     with bench_col3:
         st.markdown("**Task 3 — College Ramp Walk**")
         st.caption("Ramp walk in black and gold dress on auditorium stage.")
         if st.button("Load Task 3", use_container_width=True):
-            st.session_state.mvp_query_input = "College fest ramp walk on stage wearing a black and gold dress with Maya"
+            prompt_t3 = "I remember a college ramp walk photo where I was wearing a black and gold dress."
+            st.session_state.mvp_main_search_textarea = prompt_t3
+            st.session_state.mvp_query_input = prompt_t3
             st.session_state.mvp_active_task_id = "TASK-3"
             st.session_state.mvp_cues = None
             st.session_state.mvp_candidates = []
             st.session_state.mvp_rejected_ids = []
             st.session_state.mvp_has_searched = False
             st.session_state.mvp_prev_count = None
+            st.session_state.mvp_scroll_to_search = True
             st.rerun()
 
     # Dataset inspection expander

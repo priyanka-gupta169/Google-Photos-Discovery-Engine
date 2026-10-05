@@ -9,7 +9,7 @@ const BENCHMARK_TASKS = [
     title: "Task 1 — Fuzzy Travel Memory",
     researchTag: "R7 & R8",
     description: "Find an old beach sunset photo taken with friend Rohan roughly 3 years ago. No exact date is remembered.",
-    defaultPrompt: "Trip to Goa with my friend Rohan around 3 years back at a beach sunset",
+    defaultPrompt: "I remember a photo from a Goa trip with my friend Rohan around 3 years ago. I don't remember the exact date.",
     targetPhotoId: "PHOTO-007",
     targetTitle: "Goa Beach Sunset with Rohan",
   },
@@ -18,7 +18,7 @@ const BENCHMARK_TASKS = [
     title: "Task 2 — University Marksheet",
     researchTag: "R12 & CLUST-06",
     description: "Urgently find a saved degree marksheet or transcript scan from college around 2022. Exact filename is unknown.",
-    defaultPrompt: "I need to find my university marksheet or degree certificate from college around 2022",
+    defaultPrompt: "I remember a university marksheet or grade-sheet scan from around 2022. I don't remember the exact date or filename.",
     targetPhotoId: "PHOTO-031",
     targetTitle: "Bachelor of Technology Final Marksheet",
   },
@@ -27,7 +27,7 @@ const BENCHMARK_TASKS = [
     title: "Task 3 — College Ramp Walk",
     researchTag: "R9 & R14",
     description: "Find a photo wearing a black and gold outfit on stage during a college ramp walk, rather than at the annual formal dinner.",
-    defaultPrompt: "College fest ramp walk on stage wearing a black and gold dress with Maya",
+    defaultPrompt: "I remember a college ramp walk photo where I was wearing a black and gold dress.",
     targetPhotoId: "PHOTO-023",
     targetTitle: "College Fest Ramp Walk in Black & Gold",
   },
@@ -43,14 +43,14 @@ const OPEN_ENDED_TASK = {
 };
 
 const SUGGESTED_EXAMPLE_CHIPS = [
-  { icon: "🏔️", label: "Mountain", prompt: "I remember a photo of a mountain from a trip" },
-  { icon: "🪔", label: "Navratri", prompt: "Navratri photos in traditional outfit" },
-  { icon: "🏖️", label: "Beach", prompt: "Trip to the beach with friends around sunset" },
-  { icon: "🐶", label: "Dog", prompt: "A sunny day with the dog in the park" },
-  { icon: "🎂", label: "Birthday", prompt: "Birthday cake cutting party with friends" },
-  { icon: "🌅", label: "Sunset", prompt: "A beautiful sunset near the water" },
-  { icon: "👨‍👩‍👧", label: "Family", prompt: "Family holiday celebration" },
-  { icon: "🎓", label: "College", prompt: "College days with my friends" },
+  { icon: "🏔️", label: "Mountain", keyword: "Mountain" },
+  { icon: "🪔", label: "Navratri", keyword: "Navratri" },
+  { icon: "🏖️", label: "Beach", keyword: "Beach" },
+  { icon: "🐶", label: "Dog", keyword: "Dog" },
+  { icon: "🎂", label: "Birthday", keyword: "Birthday" },
+  { icon: "🌅", label: "Sunset", keyword: "Sunset" },
+  { icon: "👨‍👩‍👧", label: "Family", keyword: "Family" },
+  { icon: "🎓", label: "College", keyword: "College" },
 ];
 
 export default function MemoryAssistant({ onSwitchToWorkbench }) {
@@ -122,9 +122,21 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
     }, 100);
   };
 
-  const handleChipClick = (prompt) => {
-    setQueryText(prompt);
-    setSelectedTask(OPEN_ENDED_TASK);
+  const handleChipClick = (keyword) => {
+    setQueryText((prev) => {
+      const current = (prev || "").trim();
+      if (!current) {
+        return keyword;
+      }
+      const regex = new RegExp(`\\b${keyword}\\b`, "i");
+      if (regex.test(current)) {
+        return current;
+      }
+      if (current.endsWith(",") || current.endsWith(", ")) {
+        return `${current.replace(/,\s*$/, "")}, ${keyword}`;
+      }
+      return `${current}, ${keyword}`;
+    });
     if (searchInputRef.current) {
       searchInputRef.current.focus();
     }
@@ -624,7 +636,7 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
               {SUGGESTED_EXAMPLE_CHIPS.map((chip, idx) => (
                 <button
                   key={idx}
-                  onClick={() => handleChipClick(chip.prompt)}
+                  onClick={() => handleChipClick(chip.keyword)}
                   style={{
                     backgroundColor: "rgba(255, 255, 255, 0.05)",
                     border: "1px solid var(--border-subtle)",
@@ -646,7 +658,7 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
                     e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
                     e.currentTarget.style.borderColor = "var(--border-subtle)";
                   }}
-                  title={`Fill prompt: "${chip.prompt}"`}
+                  title={`Add keyword: "${chip.keyword}"`}
                 >
                   <span>{chip.icon}</span>
                   <span>{chip.label}</span>
@@ -1335,8 +1347,11 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
                   PART 6 RESEARCH MODE
                 </span>
               </div>
-              <p style={{ color: "var(--text-secondary)", fontSize: "12.5px", marginTop: "4px" }}>
-                These are controlled scenarios used for usability testing. You can use them if you're participating in the research study.
+              <p style={{ color: "var(--text-secondary)", fontSize: "12.5px", marginTop: "4px", marginBottom: "4px" }}>
+                These are controlled scenarios for usability testing.
+              </p>
+              <p style={{ color: "var(--text-muted)", fontSize: "11.5px" }}>
+                <strong>How to use:</strong> 1. Load a task &nbsp;•&nbsp; 2. Edit it if you want &nbsp;•&nbsp; 3. Search Memories &nbsp;•&nbsp; 4. Review and refine the results
               </p>
             </div>
           </div>
