@@ -143,7 +143,28 @@ When the initial candidate pool contains visual collisions or distractor photos:
 3. User adds an additional clue via the **"Didn't find the exact photo? Add another clue"** section (e.g., `"It was on the auditorium stage under spotlights with Maya"`).
 4. System merges new cues with previous memory state (`updated_cues = previous_cues + new_cues`).
 5. All candidates are re-scored against the enriched cue set without restarting search from scratch.
-6. Target photo advances to Rank #1, while the distractor is suppressed.
+---
+
+## 6B. UX Architecture & Dual-Mode Research Experience (Part 6 Ready)
+
+In preparation for Part 6 usability testing, the user experience was evolved from a benchmark-centric demo into an authentic AI memory retrieval experience supporting two distinct testing modes:
+
+### 1. Primary Experience: Open-Ended AI Memory Retrieval
+- **Core Hypothesis Validation:** The primary interface focuses on testing whether users naturally grasp the core interaction model:
+  $$\text{Vague Memory} \longrightarrow \text{AI Extracts Multi-Cues} \longrightarrow \text{Ranked Possible Matches} \longrightarrow \text{Transparent Rationales} \longrightarrow \text{Iterative Refinement} \longrightarrow \text{Target Retrieval}$$
+- **Zero Blank-State Paralysis:** Provides a clear entry heading (*"Can't remember the exact date or filename? Tell me what you remember about the photo"*), supporting guidance, and non-restrictive example chips (`🏔️ Mountain`, `🪔 Navratri`, `🏖️ Beach`, `🐶 Dog`, `🎂 Birthday`, `🌅 Sunset`, `👨‍👩‍👧 Family`, `🎓 College`).
+- **Transparency HUD ("🧠 What I understood"):** Prominently renders the structured cues extracted from the user's natural language, proving that the system decomposes memories across people, timeframes, settings, events, objects, OCR text, and visuals.
+- **Candidate Ranking & Progression:** Results are clearly framed as *"🔎 Possible matches"* ranked by memory cues. When a user applies new clues or excludes candidates, a live progression badge (*e.g., "Progression: 31 matches → 8 matches"*) confirms that the candidate set is responding to their inputs.
+- **Honest Zero-Match Handling:** If an open-ended search yields no strong matches in the 40-photo representative dataset, the system **never fabricates results**. Instead, an explicit empty state advises the participant on specific cue types to add (*"who was there, where you were, what was happening, what someone was wearing, what the photo looked like, an approximate time"*).
+- **Negative Feedback Loop:** Clicking *"✕ Not this photo"* immediately applies the negative penalty and prompts the user: *"Not the right photo? Add another clue to narrow the search."*
+
+### 2. Secondary Experience: Controlled Research Benchmark Tasks
+- **Placement:** Positioned in a dedicated, visually distinct section below the primary open-ended search area.
+- **Purpose:** Retained strictly for controlled, repeatable Part 6 usability testing:
+  - **Task 1 — Fuzzy Travel Memory** (`PHOTO-007` ground truth)
+  - **Task 2 — University Marksheet** (`PHOTO-031` ground truth)
+  - **Task 3 — College Ramp Walk** (`PHOTO-023` ground truth via refinement)
+- **Methodological Distinction:** Benchmark tasks provide standardized cross-participant comparison of quantitative metrics (time to retrieve, attempt counts, SEQ ease ratings, ground truth accuracy), whereas the primary open-ended search evaluates qualitative mental model alignment and whether users can independently formulate effective episodic cues.
 
 ---
 

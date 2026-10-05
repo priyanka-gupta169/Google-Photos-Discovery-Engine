@@ -27,13 +27,13 @@ REFERENCE_YEAR = 2026
 # ==============================================================================
 
 KNOWN_PEOPLE = ["rohan", "kabir", "sneha", "maya", "ananya", "priya", "parents", "sister", "cousins", "friends", "family", "colleagues"]
-KNOWN_LOCATIONS = ["goa", "manali", "kerala", "jaipur", "pondicherry", "ladakh", "rishikesh", "ooty", "bangalore", "delhi", "mumbai", "beach", "cafe", "auditorium", "palace", "rooftop", "cliff", "park", "resort", "amphitheater"]
-KNOWN_ACTIVITIES = ["sunset", "ramp walk", "fashion show", "trekking", "dinner", "picnic", "birthday", "cake cutting", "diwali", "party", "graduation", "gaming", "concert", "dance", "dandiya", "rafting", "houseboat", "marksheet", "prescription", "receipt", "ticket"]
-KNOWN_OBJECTS = ["marksheet", "transcript", "receipt", "ticket", "bill", "guitar", "cake", "diyas", "prescription", "contract", "trophy", "bike", "motorcycle", "laptop"]
+KNOWN_LOCATIONS = ["goa", "manali", "kerala", "jaipur", "pondicherry", "ladakh", "rishikesh", "ooty", "bangalore", "delhi", "mumbai", "beach", "cafe", "auditorium", "palace", "rooftop", "cliff", "park", "resort", "amphitheater", "mountain", "mountains", "hills", "lake", "river"]
+KNOWN_ACTIVITIES = ["sunset", "ramp walk", "fashion show", "trekking", "dinner", "picnic", "birthday", "cake cutting", "diwali", "navratri", "garba", "dandiya", "party", "graduation", "gaming", "concert", "dance", "rafting", "houseboat", "marksheet", "prescription", "receipt", "ticket"]
+KNOWN_OBJECTS = ["dog", "puppy", "pet", "marksheet", "transcript", "receipt", "ticket", "bill", "guitar", "cake", "diyas", "prescription", "contract", "trophy", "bike", "motorcycle", "laptop"]
 KNOWN_VISUALS = [
     "black and gold", "black and gold dress", "black dress", "golden hour", "snow", "white water", "blue lake",
     "yellow wall", "stage lights", "spotlight", "neon lights", "rain", "window", "outdoors", "indoor",
-    "formal", "casual", "sunglasses", "jacket"
+    "formal", "casual", "sunglasses", "jacket", "mountains", "mountain", "dog", "dandiya sticks"
 ]
 
 
@@ -92,7 +92,10 @@ def extract_cues_deterministic(query_text: str) -> Tuple[MemoryCues, List[str]]:
     activity = None
     for act in KNOWN_ACTIVITIES:
         if re.search(rf"\b{act}\b", text_lower):
-            activity = act.title()
+            if act == "navratri":
+                activity = "Garba / Dandiya (Navratri)"
+            else:
+                activity = act.title()
             break
 
     # 5. Objects

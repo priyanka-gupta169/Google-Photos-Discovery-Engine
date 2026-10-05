@@ -3,10 +3,11 @@ import React, { useState, useEffect, useRef } from "react";
 // ==============================================================================
 // PRESET EVALUATION TASKS (Derived strictly from Part 3 & 4 Research)
 // ==============================================================================
-const EVALUATION_TASKS = [
+const BENCHMARK_TASKS = [
   {
     id: "TASK-1",
-    title: "Task 1: Fuzzy Travel Memory (R7 & R8)",
+    title: "Task 1 — Fuzzy Travel Memory",
+    researchTag: "R7 & R8",
     description: "Find an old beach sunset photo taken with friend Rohan roughly 3 years ago. No exact date is remembered.",
     defaultPrompt: "Trip to Goa with my friend Rohan around 3 years back at a beach sunset",
     targetPhotoId: "PHOTO-007",
@@ -14,7 +15,8 @@ const EVALUATION_TASKS = [
   },
   {
     id: "TASK-2",
-    title: "Task 2: Utility Marksheet Scan (R12 & CLUST-06)",
+    title: "Task 2 — University Marksheet",
+    researchTag: "R12 & CLUST-06",
     description: "Urgently find a saved degree marksheet or transcript scan from college around 2022. Exact filename is unknown.",
     defaultPrompt: "I need to find my university marksheet or degree certificate from college around 2022",
     targetPhotoId: "PHOTO-031",
@@ -22,26 +24,39 @@ const EVALUATION_TASKS = [
   },
   {
     id: "TASK-3",
-    title: "Task 3: Visual Collision Disambiguation (R9 & R14)",
+    title: "Task 3 — College Ramp Walk",
+    researchTag: "R9 & R14",
     description: "Find a photo wearing a black and gold outfit on stage during a college ramp walk, rather than at the annual formal dinner.",
     defaultPrompt: "College fest ramp walk on stage wearing a black and gold dress with Maya",
     targetPhotoId: "PHOTO-023",
     targetTitle: "College Fest Ramp Walk in Black & Gold",
   },
-  {
-    id: "FREEFORM",
-    title: "Custom Freeform Memory",
-    description: "Search any informal episodic memory in natural language using your own words.",
-    defaultPrompt: "",
-    targetPhotoId: null,
-    targetTitle: null,
-  },
+];
+
+const OPEN_ENDED_TASK = {
+  id: "OPEN_ENDED",
+  title: "Open-Ended Memory Search",
+  description: "Search any informal episodic memory in natural language using your own words.",
+  defaultPrompt: "",
+  targetPhotoId: null,
+  targetTitle: null,
+};
+
+const SUGGESTED_EXAMPLE_CHIPS = [
+  { icon: "🏔️", label: "Mountain", prompt: "I remember a photo of a mountain from a trip" },
+  { icon: "🪔", label: "Navratri", prompt: "Navratri photos in traditional outfit" },
+  { icon: "🏖️", label: "Beach", prompt: "Trip to the beach with friends around sunset" },
+  { icon: "🐶", label: "Dog", prompt: "A sunny day with the dog in the park" },
+  { icon: "🎂", label: "Birthday", prompt: "Birthday cake cutting party with friends" },
+  { icon: "🌅", label: "Sunset", prompt: "A beautiful sunset near the water" },
+  { icon: "👨‍👩‍👧", label: "Family", prompt: "Family holiday celebration" },
+  { icon: "🎓", label: "College", prompt: "College days with my friends" },
 ];
 
 export default function MemoryAssistant({ onSwitchToWorkbench }) {
   // Session State
-  const [selectedTask, setSelectedTask] = useState(EVALUATION_TASKS[0]);
-  const [queryText, setQueryText] = useState(EVALUATION_TASKS[0].defaultPrompt);
+  const [selectedTask, setSelectedTask] = useState(OPEN_ENDED_TASK);
+  const [queryText, setQueryText] = useState("");
   const [sessionId, setSessionId] = useState(() => "session-" + Math.random().toString(36).substring(2, 9));
   const [sessionStartTime, setSessionStartTime] = useState(Date.now());
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -56,11 +71,15 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
   const [refinementCount, setRefinementCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [systemMessage, setSystemMessage] = useState("");
+  const [hasSearched, setHasSearched] = useState(false);
+  const [previousCandidateCount, setPreviousCandidateCount] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(6);
+  const [rejectedNotice, setRejectedNotice] = useState("");
+  const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
 
   // Refinement UI State
   const [isRefinementOpen, setIsRefinementOpen] = useState(false);
   const [newClueInput, setNewClueInput] = useState("");
-  const [selectedRefinementChip, setSelectedRefinementChip] = useState("");
 
   // Modals & Completion State
   const [completedSuccessPhoto, setCompletedSuccessPhoto] = useState(null);
@@ -69,6 +88,12 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
   const [seqRating, setSeqRating] = useState(6);
   const [isDatasetModalOpen, setIsDatasetModalOpen] = useState(false);
   const [datasetRecords, setDatasetRecords] = useState([]);
+
+  // DOM Refs
+  const searchInputRef = useRef(null);
+  const refinementInputRef = useRef(null);
+  const resultsRef = useRef(null);
+  const benchmarkRef = useRef(null);
 
   // Live Timer
   useEffect(() => {
@@ -86,14 +111,26 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
       .catch((err) => console.warn("Dataset catalog fetch error:", err));
   }, []);
 
-  // Handle Task Switching
-  const handleSelectTask = (task) => {
+  // Handle Benchmark Task Switching
+  const handleSelectBenchmarkTask = (task) => {
     setSelectedTask(task);
     setQueryText(task.defaultPrompt);
     resetSession(task);
+    setTimeout(() => {
+      searchInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      searchInputRef.current?.focus();
+    }, 100);
   };
 
-  const resetSession = (task = selectedTask) => {
+  const handleChipClick = (prompt) => {
+    setQueryText(prompt);
+    setSelectedTask(OPEN_ENDED_TASK);
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  };
+
+  const resetSession = (task = OPEN_ENDED_TASK) => {
     setSessionId("session-" + Math.random().toString(36).substring(2, 9));
     setSessionStartTime(Date.now());
     setElapsedSeconds(0);
@@ -105,10 +142,20 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
     setAttemptCount(0);
     setRefinementCount(0);
     setSystemMessage("");
+    setHasSearched(false);
+    setPreviousCandidateCount(null);
+    setVisibleCount(6);
+    setRejectedNotice("");
     setIsRefinementOpen(false);
     setNewClueInput("");
     setCompletedSuccessPhoto(null);
     setIsAbandonmentOpen(false);
+  };
+
+  const handleFullReset = () => {
+    setSelectedTask(OPEN_ENDED_TASK);
+    setQueryText("");
+    resetSession(OPEN_ENDED_TASK);
   };
 
   // ----------------------------------------------------------------------------
@@ -117,9 +164,12 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
   const handleSearch = async () => {
     if (!queryText.trim()) return;
     setIsLoading(true);
-    setSystemMessage("Extracting memory cues and retrieving candidates...");
+    setSystemMessage("Translating your memory into structured clues...");
     const nextAttempts = attemptCount + 1;
     setAttemptCount(nextAttempts);
+    setPreviousCandidateCount(null);
+    setRejectedNotice("");
+    setVisibleCount(6);
 
     try {
       // Step A: Extract structured memory cues
@@ -145,17 +195,25 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
         }),
       });
       const searchData = await searchRes.json();
-      setCandidates(searchData.results || []);
+      const resultsList = searchData.results || [];
+      setCandidates(resultsList);
       setEventClusters(searchData.event_clusters || []);
+      setHasSearched(true);
 
-      setSystemMessage(
-        `Retrieved ${searchData.total_candidates} candidate photos matched across ${
-          extractedCues.companions?.length || 0
-        } person(s), approximate time (${extractedCues.approximate_time || "fuzzy"}), and visual cues.`
-      );
+      if (resultsList.length > 0) {
+        setSystemMessage(
+          `Identified ${resultsList.length} possible matches ranked by memory clues.`
+        );
+        setTimeout(() => {
+          resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 150);
+      } else {
+        setSystemMessage("No strong matches found for this memory in the representative archive.");
+      }
     } catch (err) {
       console.error("Search error:", err);
-      setSystemMessage("Search encountered an issue. Using offline fallback retrieval.");
+      setSystemMessage("Search encountered an issue. Using fallback retrieval.");
+      setHasSearched(true);
     } finally {
       setIsLoading(false);
     }
@@ -164,15 +222,17 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
   // ----------------------------------------------------------------------------
   // 2. ITERATIVE REFINEMENT
   // ----------------------------------------------------------------------------
-  const handleRefine = async (explicitChip = null) => {
-    const clueToAdd = explicitChip || newClueInput.trim();
-    if (!clueToAdd && !explicitChip && rejectedPhotoIds.length === 0) return;
+  const handleRefine = async (explicitClue = null) => {
+    const clueToAdd = explicitClue || newClueInput.trim();
+    if (!clueToAdd && rejectedPhotoIds.length === 0) return;
 
     setIsLoading(true);
     setSystemMessage("Merging new memory cues and re-scoring candidate pool...");
     const nextRefinements = refinementCount + 1;
     setRefinementCount(nextRefinements);
     setAttemptCount((prev) => prev + 1);
+    setPreviousCandidateCount(candidates.length);
+    setRejectedNotice("");
 
     try {
       const res = await fetch("/api/mvp/refine", {
@@ -180,19 +240,24 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           previous_cues: activeCues || {},
-          new_clue_text: clueToAdd || "Refining based on rejected candidates",
-          selected_chip: explicitChip,
+          new_clue_text: clueToAdd || "Refining based on excluded candidates",
+          selected_chip: explicitClue,
           rejected_photo_ids: rejectedPhotoIds,
           active_task_id: selectedTask.id,
         }),
       });
       const data = await res.json();
       setActiveCues(data.updated_cues);
-      setCandidates(data.results || []);
+      const updatedResults = data.results || [];
+      setCandidates(updatedResults);
       setSuggestedRefinements(data.suggested_refinements || []);
       setSystemMessage(data.system_message || `Updated candidate pool to ${data.total_candidates} photos.`);
       setNewClueInput("");
-      setIsRefinementOpen(false);
+      setVisibleCount(6);
+
+      setTimeout(() => {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
     } catch (err) {
       console.error("Refine error:", err);
       setSystemMessage("Refinement failed to update candidates.");
@@ -213,7 +278,11 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
     const updatedRejected = [...rejectedPhotoIds, photoId];
     setRejectedPhotoIds(updatedRejected);
     setIsRefinementOpen(true);
-    setSystemMessage("Removed this photo from suggestions. Using this feedback to narrow your search.");
+    setRejectedNotice("Not the right photo? Add another clue to narrow the search.");
+    setTimeout(() => {
+      refinementInputRef.current?.focus();
+      refinementInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 120);
   };
 
   // ----------------------------------------------------------------------------
@@ -255,6 +324,18 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
     setSystemMessage("Search session was ended and logged as abandoned.");
   };
 
+  // Cue Extraction Field Helper
+  const hasExtractedCues = activeCues && (
+    (activeCues.companions && activeCues.companions.length > 0) ||
+    activeCues.location ||
+    activeCues.approximate_time ||
+    activeCues.activity ||
+    (activeCues.visual_attributes && activeCues.visual_attributes.length > 0) ||
+    (activeCues.objects && activeCues.objects.length > 0) ||
+    activeCues.text_ocr ||
+    activeCues.uncertainty
+  );
+
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-main)", color: "var(--text-primary)" }}>
       {/* ==================================================================== */}
@@ -262,8 +343,8 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
       {/* ==================================================================== */}
       <div
         style={{
-          backgroundColor: "rgba(66, 133, 244, 0.12)",
-          borderBottom: "1px solid rgba(66, 133, 244, 0.3)",
+          backgroundColor: "rgba(66, 133, 244, 0.1)",
+          borderBottom: "1px solid rgba(66, 133, 244, 0.25)",
           padding: "8px 24px",
           display: "flex",
           justifyContent: "space-between",
@@ -276,7 +357,7 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
             PART 5 MVP
           </span>
           <span style={{ color: "var(--text-secondary)" }}>
-            Google Photos Memory Retrieval Assistant • Grounded in Part 4 Problem Definition • Controlled Representative Dataset ($N=40$)
+            AI-Assisted Memory Retrieval Assistant • Usability Testing Prototype • Controlled Representative Dataset (40 Photos)
           </span>
         </div>
         <div style={{ display: "flex", gap: "12px" }}>
@@ -316,100 +397,154 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
       {/* ==================================================================== */}
       {/* MAIN CONTAINER */}
       {/* ==================================================================== */}
-      <main style={{ maxWidth: "1200px", margin: "0 auto", padding: "24px 20px" }}>
-        {/* Title Header */}
-        <div style={{ textAlign: "center", marginBottom: "24px" }}>
-          <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "28px", fontWeight: "800", color: "#fff", letterSpacing: "-0.5px" }}>
-            AI Memory Retrieval Assistant
+      <main style={{ maxWidth: "1180px", margin: "0 auto", padding: "28px 20px" }}>
+        
+        {/* ================================================================== */}
+        {/* HEADER SECTION */}
+        {/* ================================================================== */}
+        <div style={{ textAlign: "center", marginBottom: "26px" }}>
+          <h1 style={{ fontFamily: "var(--font-heading)", fontSize: "32px", fontWeight: "800", color: "#fff", letterSpacing: "-0.5px" }}>
+            📸 AI Memory Retrieval Assistant
           </h1>
-          <p style={{ color: "var(--text-primary)", fontSize: "16px", fontWeight: "600", marginTop: "6px" }}>
+          <p style={{ color: "var(--text-primary)", fontSize: "16px", fontWeight: "600", marginTop: "8px" }}>
             Can't remember the exact date or filename? Tell me what you remember about the photo.
           </p>
-          <p style={{ color: "var(--text-secondary)", fontSize: "13px", marginTop: "4px", maxWidth: "700px", margin: "4px auto 0" }}>
-            Describe the people, place, approximate time, event, appearance, or anything else you remember. The AI will turn your memory into searchable clues and help you narrow down the results.
+          <p style={{ color: "var(--text-secondary)", fontSize: "13.5px", marginTop: "5px", maxWidth: "680px", margin: "5px auto 0" }}>
+            Describe anything you remember — a person, place, event, object, activity, appearance, or approximate time.
           </p>
+
+          {/* Prototype Disclaimer */}
           <div
             style={{
-              display: "inline-block",
-              marginTop: "12px",
-              padding: "6px 14px",
-              backgroundColor: "rgba(245, 158, 11, 0.12)",
-              border: "1px solid rgba(245, 158, 11, 0.35)",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              marginTop: "14px",
+              padding: "6px 16px",
+              backgroundColor: "rgba(245, 158, 11, 0.1)",
+              border: "1px solid rgba(245, 158, 11, 0.3)",
               borderRadius: "20px",
               fontSize: "12px",
               color: "#FBBF24",
-              fontWeight: "500",
             }}
           >
-            ⚠️ <strong>Prototype Notice</strong>: This is a prototype using a representative photo dataset. It does not access your personal Google Photos.
+            <span>⚠️</span>
+            <span>
+              This is an experimental prototype using a controlled representative photo dataset (40 photos). It does not access your personal Google Photos.
+            </span>
           </div>
-        </div>
 
-        {/* Task Selection Bar */}
-        <div
-          style={{
-            backgroundColor: "var(--bg-surface)",
-            border: "1px solid var(--border-subtle)",
-            borderRadius: "12px",
-            padding: "16px 20px",
-            marginBottom: "24px",
-          }}
-        >
-          <div style={{ fontSize: "12px", fontWeight: "600", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "10px" }}>
-            Select a test scenario (or try your own in Freeform):
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "10px" }}>
-            {EVALUATION_TASKS.map((t) => {
-              const isSelected = selectedTask.id === t.id;
-              return (
-                <div
-                  key={t.id}
-                  onClick={() => handleSelectTask(t)}
-                  style={{
-                    padding: "12px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    border: isSelected ? "2px solid var(--accent-google-blue)" : "1px solid var(--border-subtle)",
-                    backgroundColor: isSelected ? "rgba(66, 133, 244, 0.12)" : "var(--bg-card)",
-                    transition: "all 0.2s ease",
-                  }}
-                >
-                  <div style={{ fontWeight: "700", fontSize: "13px", color: isSelected ? "#fff" : "var(--text-primary)" }}>
-                    {t.title}
-                  </div>
-                  <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginTop: "4px", lineHeight: "1.4" }}>
-                    {t.description}
-                  </div>
+          {/* Collapsible 'How it works' section */}
+          <div style={{ marginTop: "14px" }}>
+            <button
+              onClick={() => setIsHowItWorksOpen(!isHowItWorksOpen)}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--text-brand)",
+                fontSize: "12px",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                textDecoration: "underline",
+              }}
+            >
+              <span>{isHowItWorksOpen ? "▲ Hide 'How it works'" : "▼ How it works"}</span>
+            </button>
+
+            {isHowItWorksOpen && (
+              <div
+                style={{
+                  marginTop: "12px",
+                  maxWidth: "840px",
+                  margin: "12px auto 0",
+                  backgroundColor: "rgba(14, 20, 36, 0.75)",
+                  border: "1px solid var(--border-subtle)",
+                  borderRadius: "12px",
+                  padding: "16px 20px",
+                  textAlign: "left",
+                }}
+              >
+                <div style={{ fontSize: "12px", fontWeight: "700", color: "#fff", marginBottom: "10px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  The 5-Step Interaction Model
                 </div>
-              );
-            })}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "10px" }}>
+                  {[
+                    { step: "1", title: "Tell what you remember", desc: "Speak or type in your natural words" },
+                    { step: "2", title: "AI extracts clues", desc: "Translates memory into multiple dimensions" },
+                    { step: "3", title: "See possible matches", desc: "Ranked candidates with transparent rationales" },
+                    { step: "4", title: "Add another clue", desc: "Refine without restarting the search" },
+                    { step: "5", title: "Retrieve your photo", desc: "Narrowed candidate pool down to target" },
+                  ].map((s) => (
+                    <div
+                      key={s.step}
+                      style={{
+                        backgroundColor: "var(--bg-card)",
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid var(--border-subtle)",
+                      }}
+                    >
+                      <div style={{ color: "var(--accent-google-blue)", fontWeight: "800", fontSize: "13px" }}>
+                        Step {s.step}
+                      </div>
+                      <div style={{ color: "#fff", fontWeight: "600", fontSize: "12px", marginTop: "2px" }}>
+                        {s.title}
+                      </div>
+                      <div style={{ color: "var(--text-secondary)", fontSize: "11px", marginTop: "3px" }}>
+                        {s.desc}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* ================================================================== */}
-        {/* CONVERSATIONAL MEMORY INPUT BAR */}
+        {/* PRIMARY CONVERSATIONAL MEMORY SEARCH BAR */}
         {/* ================================================================== */}
         <div
           style={{
             backgroundColor: "var(--bg-card)",
             border: "1px solid var(--border-highlight)",
-            borderRadius: "16px",
-            padding: "20px",
+            borderRadius: "18px",
+            padding: "24px",
             boxShadow: "var(--shadow-glow)",
-            marginBottom: "20px",
+            marginBottom: "24px",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <label style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>
-              Tell me what you remember
-            </label>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+            <div>
+              <label style={{ fontSize: "15px", fontWeight: "700", color: "#fff" }}>
+                What photo are you trying to find?
+              </label>
+              {selectedTask.id !== "OPEN_ENDED" && (
+                <span
+                  style={{
+                    marginLeft: "10px",
+                    backgroundColor: "rgba(66, 133, 244, 0.2)",
+                    color: "#93C5FD",
+                    fontSize: "11px",
+                    padding: "2px 8px",
+                    borderRadius: "4px",
+                    fontWeight: "600",
+                  }}
+                >
+                  Active Benchmark: {selectedTask.title}
+                </span>
+              )}
+            </div>
+
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <span style={{ fontSize: "11px", color: "var(--text-muted)" }}>
-                Session: <code>{sessionId}</code> • Attempt #{attemptCount} • Refinements: {refinementCount}
+                Session: <code>{sessionId}</code> • Attempt #{attemptCount}
               </span>
               <button
-                onClick={handleResetSession}
-                title="Start a new photo search and clear the current memory and results."
+                onClick={handleFullReset}
+                title="Start a fresh search and clear current memory and candidates."
                 style={{
                   background: "transparent",
                   border: "1px solid var(--border-subtle)",
@@ -427,10 +562,11 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
 
           <div style={{ display: "flex", gap: "12px", alignItems: "flex-start" }}>
             <textarea
+              ref={searchInputRef}
               rows={2}
               value={queryText}
               onChange={(e) => setQueryText(e.target.value)}
-              placeholder="I remember a Goa trip with Rohan around 3 years ago, near sunset..."
+              placeholder="I remember a photo of a mountain from a trip..."
               style={{
                 flex: 1,
                 backgroundColor: "var(--bg-inset)",
@@ -457,20 +593,66 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
                 color: "#fff",
                 border: "none",
                 borderRadius: "10px",
-                padding: "14px 24px",
+                padding: "14px 26px",
                 fontWeight: "700",
                 fontSize: "14px",
-                cursor: isLoading ? "not-allowed" : "pointer",
-                boxShadow: "0 4px 12px rgba(66, 133, 244, 0.4)",
-                minWidth: "160px",
+                cursor: isLoading || !queryText.trim() ? "not-allowed" : "pointer",
+                boxShadow: "0 4px 14px rgba(66, 133, 244, 0.4)",
+                minWidth: "170px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "8px",
               }}
             >
-              {isLoading ? "Translating..." : "🔍 Search Memories"}
+              {isLoading ? "Searching..." : "🔍 Search Memories"}
             </button>
+          </div>
+
+          {/* Under-Input Guidance & Example Chips */}
+          <div style={{ marginTop: "16px", paddingTop: "14px", borderTop: "1px solid var(--border-subtle)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "8px" }}>
+              <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontWeight: "600" }}>
+                Not sure what to type? Try something like:
+              </span>
+              <span style={{ fontSize: "11px", color: "var(--text-muted)", fontStyle: "italic" }}>
+                You don't need the exact date, filename, or exact words.
+              </span>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+              {SUGGESTED_EXAMPLE_CHIPS.map((chip, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleChipClick(chip.prompt)}
+                  style={{
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    border: "1px solid var(--border-subtle)",
+                    color: "var(--text-primary)",
+                    borderRadius: "18px",
+                    padding: "5px 12px",
+                    fontSize: "12px",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(66, 133, 244, 0.15)";
+                    e.currentTarget.style.borderColor = "var(--accent-google-blue)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.05)";
+                    e.currentTarget.style.borderColor = "var(--border-subtle)";
+                  }}
+                  title={`Fill prompt: "${chip.prompt}"`}
+                >
+                  <span>{chip.icon}</span>
+                  <span>{chip.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* System Feedback Message */}
@@ -494,75 +676,171 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
         </div>
 
         {/* ================================================================== */}
-        {/* ACTIVE EXTRACTED MEMORY CUES HUD */}
+        {/* 'WHAT I UNDERSTOOD' CUES HUD */}
         {/* ================================================================== */}
-        {/* ================================================================== */}
-        {/* ACTIVE EXTRACTED MEMORY CUES HUD */}
-        {/* ================================================================== */}
-        {activeCues && (
+        {hasExtractedCues && (
           <div
             style={{
               backgroundColor: "var(--bg-surface)",
               border: "1px solid var(--border-subtle)",
-              borderRadius: "12px",
-              padding: "16px 20px",
+              borderRadius: "14px",
+              padding: "18px 22px",
               marginBottom: "24px",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-              <span style={{ fontSize: "14px", fontWeight: "700", color: "#fff" }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: "10px", marginBottom: "8px" }}>
+              <span style={{ fontSize: "15px", fontWeight: "700", color: "#fff" }}>
                 🧠 What I understood
               </span>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                (The AI translated your memory into structured retrieval clues)
+              <span style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
+                I'll use these clues together to find possible matches.
               </span>
             </div>
 
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px" }}>
               {activeCues.companions?.map((p, i) => (
-                <span key={i} style={{ backgroundColor: "rgba(99, 102, 241, 0.15)", color: "#A5B4FC", border: "1px solid rgba(99, 102, 241, 0.3)", padding: "4px 12px", borderRadius: "16px", fontSize: "12px", fontWeight: "600" }}>
+                <span
+                  key={`person-${i}`}
+                  style={{
+                    backgroundColor: "rgba(99, 102, 241, 0.15)",
+                    color: "#A5B4FC",
+                    border: "1px solid rgba(99, 102, 241, 0.3)",
+                    padding: "4px 12px",
+                    borderRadius: "16px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                  }}
+                >
                   👤 Person: {p}
                 </span>
               ))}
 
-              {activeCues.location && (
-                <span style={{ backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#34D399", border: "1px solid rgba(16, 185, 129, 0.3)", padding: "4px 12px", borderRadius: "16px", fontSize: "12px", fontWeight: "600" }}>
-                  📍 Location: {activeCues.location}
-                </span>
-              )}
-
               {activeCues.approximate_time && (
-                <span style={{ backgroundColor: "rgba(245, 158, 11, 0.15)", color: "#FBBF24", border: "1px solid rgba(245, 158, 11, 0.3)", padding: "4px 12px", borderRadius: "16px", fontSize: "12px", fontWeight: "600" }}>
+                <span
+                  style={{
+                    backgroundColor: "rgba(245, 158, 11, 0.15)",
+                    color: "#FBBF24",
+                    border: "1px solid rgba(245, 158, 11, 0.3)",
+                    padding: "4px 12px",
+                    borderRadius: "16px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                  }}
+                >
                   🕒 Approximate time: {activeCues.approximate_time}
                 </span>
               )}
 
+              {activeCues.location && (
+                <span
+                  style={{
+                    backgroundColor: "rgba(16, 185, 129, 0.15)",
+                    color: "#34D399",
+                    border: "1px solid rgba(16, 185, 129, 0.3)",
+                    padding: "4px 12px",
+                    borderRadius: "16px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                  }}
+                >
+                  📍 Location: {activeCues.location}
+                </span>
+              )}
+
+              {activeCues.activity && (
+                <span
+                  style={{
+                    backgroundColor: "rgba(236, 72, 153, 0.15)",
+                    color: "#F472B6",
+                    border: "1px solid rgba(236, 72, 153, 0.3)",
+                    padding: "4px 12px",
+                    borderRadius: "16px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                  }}
+                >
+                  🎯 Activity / Event: {activeCues.activity}
+                </span>
+              )}
+
               {activeCues.visual_attributes?.map((v, i) => (
-                <span key={i} style={{ backgroundColor: "rgba(6, 182, 212, 0.15)", color: "#22D3EE", border: "1px solid rgba(6, 182, 212, 0.3)", padding: "4px 12px", borderRadius: "16px", fontSize: "12px", fontWeight: "600" }}>
+                <span
+                  key={`visual-${i}`}
+                  style={{
+                    backgroundColor: "rgba(6, 182, 212, 0.15)",
+                    color: "#22D3EE",
+                    border: "1px solid rgba(6, 182, 212, 0.3)",
+                    padding: "4px 12px",
+                    borderRadius: "16px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                  }}
+                >
                   🎨 Visual clue: {v}
                 </span>
               ))}
 
-              {activeCues.activity && (
-                <span style={{ backgroundColor: "rgba(236, 72, 153, 0.15)", color: "#F472B6", border: "1px solid rgba(236, 72, 153, 0.3)", padding: "4px 12px", borderRadius: "16px", fontSize: "12px", fontWeight: "600" }}>
-                  🎯 Activity: {activeCues.activity}
+              {activeCues.objects?.map((obj, i) => (
+                <span
+                  key={`object-${i}`}
+                  style={{
+                    backgroundColor: "rgba(139, 92, 246, 0.15)",
+                    color: "#C4B5FD",
+                    border: "1px solid rgba(139, 92, 246, 0.3)",
+                    padding: "4px 12px",
+                    borderRadius: "16px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                  }}
+                >
+                  📦 Object: {obj}
                 </span>
-              )}
+              ))}
 
               {activeCues.text_ocr && (
-                <span style={{ backgroundColor: "rgba(168, 85, 247, 0.15)", color: "#C084FC", border: "1px solid rgba(168, 85, 247, 0.3)", padding: "4px 12px", borderRadius: "16px", fontSize: "12px", fontWeight: "600" }}>
-                  📄 Text / Doc: {activeCues.text_ocr}
+                <span
+                  style={{
+                    backgroundColor: "rgba(168, 85, 247, 0.15)",
+                    color: "#C084FC",
+                    border: "1px solid rgba(168, 85, 247, 0.3)",
+                    padding: "4px 12px",
+                    borderRadius: "16px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                  }}
+                >
+                  📄 Document / OCR text: {activeCues.text_ocr}
                 </span>
               )}
 
               {activeCues.uncertainty && (
-                <span style={{ backgroundColor: "rgba(148, 163, 184, 0.15)", color: "#94A3B8", border: "1px solid rgba(148, 163, 184, 0.3)", padding: "4px 12px", borderRadius: "16px", fontSize: "12px", fontWeight: "600" }}>
-                  ❓ {activeCues.uncertainty}
+                <span
+                  style={{
+                    backgroundColor: "rgba(148, 163, 184, 0.15)",
+                    color: "#94A3B8",
+                    border: "1px solid rgba(148, 163, 184, 0.3)",
+                    padding: "4px 12px",
+                    borderRadius: "16px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                  }}
+                >
+                  ❓ Uncertainty: {activeCues.uncertainty}
                 </span>
               )}
 
               {rejectedPhotoIds.length > 0 && (
-                <span style={{ backgroundColor: "rgba(239, 68, 68, 0.15)", color: "#F87171", border: "1px solid rgba(239, 68, 68, 0.3)", padding: "4px 12px", borderRadius: "16px", fontSize: "12px", fontWeight: "600" }}>
+                <span
+                  style={{
+                    backgroundColor: "rgba(239, 68, 68, 0.15)",
+                    color: "#F87171",
+                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                    padding: "4px 12px",
+                    borderRadius: "16px",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                  }}
+                >
                   ✕ {rejectedPhotoIds.length} Excluded
                 </span>
               )}
@@ -571,27 +849,29 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
         )}
 
         {/* ================================================================== */}
-        {/* REFINEMENT DRAWER / PROMPTS */}
+        {/* ITERATIVE REFINEMENT SECTION */}
         {/* ================================================================== */}
         {(candidates.length > 0 || isRefinementOpen) && (
           <div
             style={{
               backgroundColor: "rgba(14, 20, 36, 0.95)",
               border: "1px solid var(--border-medium)",
-              borderRadius: "14px",
-              padding: "18px 22px",
-              marginBottom: "24px",
+              borderRadius: "16px",
+              padding: "20px 24px",
+              marginBottom: "26px",
+              boxShadow: "var(--shadow-md)",
             }}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px" }}>
               <div>
-                <div style={{ fontSize: "15px", fontWeight: "700", color: "#fff" }}>
-                  🔍 Didn't find the exact photo? Add another clue.
+                <div style={{ fontSize: "16px", fontWeight: "700", color: "#fff" }}>
+                  🔍 Didn't find the exact photo?
                 </div>
-                <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginTop: "3px" }}>
-                  Add anything else you remember — what was happening, what someone was wearing, where you were, what the photo looked like, or another approximate time/place clue.
+                <div style={{ fontSize: "12.5px", color: "var(--text-secondary)", marginTop: "3px" }}>
+                  Add another clue from what you remember — without starting over.
                 </div>
               </div>
+
               <button
                 onClick={() => setIsAbandonmentOpen(true)}
                 style={{
@@ -609,16 +889,38 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
               </button>
             </div>
 
-            {/* Quick Refinement Chips */}
+            {/* Rejection Notification / Guidance */}
+            {rejectedNotice && (
+              <div
+                style={{
+                  marginBottom: "12px",
+                  padding: "8px 12px",
+                  backgroundColor: "rgba(239, 68, 68, 0.12)",
+                  border: "1px solid rgba(239, 68, 68, 0.3)",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                  color: "#FCA5A5",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <span>ℹ️</span> {rejectedNotice}
+              </div>
+            )}
+
+            {/* Quick Refinement Suggestions */}
             {suggestedRefinements.length > 0 && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "12px" }}>
-                <span style={{ fontSize: "11px", color: "var(--text-muted)", alignSelf: "center" }}>Suggested questions:</span>
+                <span style={{ fontSize: "11px", color: "var(--text-muted)", alignSelf: "center" }}>
+                  Suggested questions:
+                </span>
                 {suggestedRefinements.map((s, idx) => (
                   <button
                     key={idx}
                     onClick={() => {
                       setNewClueInput(s);
-                      setIsRefinementOpen(true);
+                      refinementInputRef.current?.focus();
                     }}
                     style={{
                       background: "rgba(255, 255, 255, 0.06)",
@@ -637,20 +939,21 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
             )}
 
             {/* Add Clue Input Box */}
-            <div style={{ display: "flex", gap: "10px" }}>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
               <input
+                ref={refinementInputRef}
                 type="text"
                 value={newClueInput}
                 onChange={(e) => setNewClueInput(e.target.value)}
-                placeholder="e.g., It was on an auditorium stage under spotlights, or he was wearing a blue shirt..."
+                placeholder="Maybe we were laughing..."
                 style={{
                   flex: 1,
                   backgroundColor: "var(--bg-inset)",
                   border: "1px solid var(--border-medium)",
                   borderRadius: "8px",
                   color: "#fff",
-                  padding: "8px 12px",
-                  fontSize: "13px",
+                  padding: "10px 14px",
+                  fontSize: "13.5px",
                   fontFamily: "var(--font-body)",
                 }}
                 onKeyDown={(e) => {
@@ -668,10 +971,11 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
                   color: "#fff",
                   border: "none",
                   borderRadius: "8px",
-                  padding: "8px 18px",
-                  fontWeight: "600",
-                  fontSize: "13px",
-                  cursor: "pointer",
+                  padding: "10px 20px",
+                  fontWeight: "700",
+                  fontSize: "13.5px",
+                  cursor: isLoading || !newClueInput.trim() ? "not-allowed" : "pointer",
+                  whiteSpace: "nowrap",
                 }}
               >
                 Apply New Clue
@@ -681,179 +985,434 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
         )}
 
         {/* ================================================================== */}
-        {/* CANDIDATE PHOTO RESULTS GRID */}
+        {/* CANDIDATE PHOTO RESULTS GRID / EMPTY STATE */}
         {/* ================================================================== */}
-        {candidates.length > 0 ? (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
-              <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "18px", fontWeight: "700" }}>
-                Candidate Photos ({candidates.length} matches)
-              </h2>
-              <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                Organized by episodic event context to reduce visual evaluation fatigue
-              </span>
-            </div>
+        <div ref={resultsRef}>
+          {hasSearched && candidates.length > 0 && (
+            <div>
+              {/* Header with user-oriented title and progression */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "16px" }}>
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <h2 style={{ fontFamily: "var(--font-heading)", fontSize: "20px", fontWeight: "800", color: "#fff" }}>
+                      🔎 Possible matches
+                    </h2>
+                    <span
+                      style={{
+                        backgroundColor: "rgba(66, 133, 244, 0.2)",
+                        color: "#93C5FD",
+                        padding: "2px 10px",
+                        borderRadius: "12px",
+                        fontSize: "12px",
+                        fontWeight: "700",
+                      }}
+                    >
+                      {candidates.length} possible matches
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "12.5px", color: "var(--text-secondary)", marginTop: "4px" }}>
+                    I've ranked these based on the clues you provided.
+                  </div>
+                </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "18px" }}>
-              {candidates.map((cand) => {
-                const p = cand.photo;
-                const isTarget = selectedTask.targetPhotoId === p.id;
-                const isRejected = rejectedPhotoIds.includes(p.id);
+                {/* Visible count toggle & Progression indicator */}
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  {previousCandidateCount !== null && (
+                    <div
+                      style={{
+                        backgroundColor: "rgba(16, 185, 129, 0.15)",
+                        border: "1px solid rgba(16, 185, 129, 0.35)",
+                        color: "#34D399",
+                        borderRadius: "6px",
+                        padding: "3px 10px",
+                        fontSize: "11px",
+                        fontWeight: "700",
+                      }}
+                    >
+                      Progression: {previousCandidateCount} matches → {candidates.length} matches
+                    </div>
+                  )}
 
-                return (
-                  <div
-                    key={p.id}
+                  {candidates.length > 6 && (
+                    <button
+                      onClick={() => setVisibleCount((prev) => (prev >= candidates.length ? 6 : candidates.length))}
+                      style={{
+                        background: "rgba(255, 255, 255, 0.08)",
+                        border: "1px solid var(--border-subtle)",
+                        color: "var(--text-primary)",
+                        borderRadius: "6px",
+                        padding: "4px 12px",
+                        fontSize: "12px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {visibleCount >= candidates.length ? "Show Top 6 Only" : `Show All ${candidates.length} Results`}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Photo Card Grid */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "20px" }}>
+                {candidates.slice(0, visibleCount).map((cand) => {
+                  const p = cand.photo;
+                  const isTarget = selectedTask.targetPhotoId === p.id;
+                  const isRejected = rejectedPhotoIds.includes(p.id);
+
+                  return (
+                    <div
+                      key={p.id}
+                      style={{
+                        backgroundColor: "var(--bg-card)",
+                        border: isTarget && completedSuccessPhoto?.id === p.id
+                          ? "2px solid var(--accent-emerald)"
+                          : "1px solid var(--border-subtle)",
+                        borderRadius: "14px",
+                        overflow: "hidden",
+                        display: "flex",
+                        flexDirection: "column",
+                        boxShadow: "var(--shadow-md)",
+                        opacity: isRejected ? 0.35 : 1,
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      {/* Photo Image Preview */}
+                      <div style={{ position: "relative", height: "190px", backgroundColor: "#000", overflow: "hidden" }}>
+                        <img
+                          src={p.thumbnail_url}
+                          alt={p.title}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          onError={(e) => {
+                            e.target.style.display = "none";
+                          }}
+                        />
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "10px",
+                            left: "10px",
+                            backgroundColor: "rgba(0, 0, 0, 0.65)",
+                            color: "#fff",
+                            padding: "2px 8px",
+                            borderRadius: "4px",
+                            fontSize: "11px",
+                            fontWeight: "600",
+                          }}
+                        >
+                          {p.category} • ~{p.approx_year}
+                        </div>
+
+                        <div
+                          style={{
+                            position: "absolute",
+                            top: "10px",
+                            right: "10px",
+                            backgroundColor:
+                              cand.confidence_level === "HIGH_CONFIDENCE"
+                                ? "rgba(16, 185, 129, 0.9)"
+                                : cand.confidence_level === "EXPLORATORY"
+                                ? "rgba(66, 133, 244, 0.9)"
+                                : "rgba(148, 163, 184, 0.8)",
+                            color: "#fff",
+                            padding: "2px 8px",
+                            borderRadius: "4px",
+                            fontSize: "10px",
+                            fontWeight: "700",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          {cand.confidence_level === "HIGH_CONFIDENCE" ? "High Match" : "Possible Match"}
+                        </div>
+                      </div>
+
+                      {/* Metadata & Match Rationales */}
+                      <div style={{ padding: "16px", flex: 1, display: "flex", flexDirection: "column" }}>
+                        <div style={{ fontWeight: "700", fontSize: "14px", color: "#fff", marginBottom: "4px" }}>
+                          {p.title}
+                        </div>
+                        <div style={{ fontSize: "11.5px", color: "var(--text-secondary)", marginBottom: "12px", lineHeight: "1.4" }}>
+                          {p.description}
+                        </div>
+
+                        {/* Transparent Match Rationales */}
+                        <div
+                          style={{
+                            backgroundColor: "rgba(255, 255, 255, 0.04)",
+                            border: "1px solid var(--border-subtle)",
+                            borderRadius: "8px",
+                            padding: "10px",
+                            marginBottom: "14px",
+                          }}
+                        >
+                          <div style={{ fontSize: "11px", fontWeight: "700", color: "var(--text-brand)", marginBottom: "4px" }}>
+                            Why this result?
+                          </div>
+                          <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: "11px", color: "var(--text-secondary)" }}>
+                            {cand.match_reasons.slice(0, 4).map((r, rIdx) => {
+                              const cleanR = r.replace("✓", "").trim();
+                              return (
+                                <li key={rIdx} style={{ marginBottom: "2px", display: "flex", alignItems: "baseline", gap: "4px" }}>
+                                  <span style={{ color: "#34D399" }}>✓</span>
+                                  <span>{cleanR}</span>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+
+                        {/* Candidate Action Buttons */}
+                        <div style={{ marginTop: "auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                          <button
+                            onClick={() => handleConfirmPhoto(p)}
+                            style={{
+                              backgroundColor: "rgba(16, 185, 129, 0.2)",
+                              color: "#34D399",
+                              border: "1px solid rgba(16, 185, 129, 0.4)",
+                              borderRadius: "6px",
+                              padding: "8px 10px",
+                              fontWeight: "700",
+                              fontSize: "12px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            ✓ This is the photo
+                          </button>
+                          <button
+                            onClick={() => handleRejectPhoto(p.id)}
+                            style={{
+                              backgroundColor: "rgba(239, 68, 68, 0.15)",
+                              color: "#F87171",
+                              border: "1px solid rgba(239, 68, 68, 0.3)",
+                              borderRadius: "6px",
+                              padding: "8px 10px",
+                              fontWeight: "600",
+                              fontSize: "12px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            ✕ Not this photo
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Show more button at bottom if needed */}
+              {candidates.length > visibleCount && (
+                <div style={{ textAlign: "center", marginTop: "24px" }}>
+                  <button
+                    onClick={() => setVisibleCount(candidates.length)}
                     style={{
-                      backgroundColor: "var(--bg-card)",
-                      border: isTarget && completedSuccessPhoto?.id === p.id ? "2px solid var(--accent-emerald)" : "1px solid var(--border-subtle)",
-                      borderRadius: "14px",
-                      overflow: "hidden",
-                      display: "flex",
-                      flexDirection: "column",
-                      boxShadow: "var(--shadow-md)",
-                      opacity: isRejected ? 0.35 : 1,
-                      transition: "transform 0.2s ease",
+                      backgroundColor: "rgba(255, 255, 255, 0.08)",
+                      border: "1px solid var(--border-medium)",
+                      color: "#fff",
+                      borderRadius: "8px",
+                      padding: "10px 24px",
+                      fontSize: "13px",
+                      fontWeight: "600",
+                      cursor: "pointer",
                     }}
                   >
-                    {/* Photo Image Preview */}
-                    <div style={{ position: "relative", height: "190px", backgroundColor: "#000", overflow: "hidden" }}>
-                      <img
-                        src={p.thumbnail_url}
-                        alt={p.title}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                        onError={(e) => {
-                          e.target.style.display = "none";
-                        }}
-                      />
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "10px",
-                          left: "10px",
-                          backgroundColor: "rgba(0, 0, 0, 0.65)",
-                          color: "#fff",
-                          padding: "2px 8px",
-                          borderRadius: "4px",
-                          fontSize: "11px",
-                          fontWeight: "600",
-                        }}
-                      >
-                        {p.category} • ~{p.approx_year}
-                      </div>
-
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "10px",
-                          right: "10px",
-                          backgroundColor:
-                            cand.confidence_level === "HIGH_CONFIDENCE"
-                              ? "rgba(16, 185, 129, 0.85)"
-                              : cand.confidence_level === "EXPLORATORY"
-                              ? "rgba(66, 133, 244, 0.85)"
-                              : "rgba(148, 163, 184, 0.75)",
-                          color: "#fff",
-                          padding: "2px 8px",
-                          borderRadius: "4px",
-                          fontSize: "10px",
-                          fontWeight: "700",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {cand.confidence_level === "HIGH_CONFIDENCE" ? "High Match" : "Possible Match"}
-                      </div>
-                    </div>
-
-                    {/* Metadata & Match Rationales */}
-                    <div style={{ padding: "14px", flex: 1, display: "flex", flexDirection: "column" }}>
-                      <div style={{ fontWeight: "700", fontSize: "14px", color: "#fff", marginBottom: "4px" }}>
-                        {p.title}
-                      </div>
-                      <div style={{ fontSize: "11px", color: "var(--text-secondary)", marginBottom: "10px", lineHeight: "1.4" }}>
-                        {p.description}
-                      </div>
-
-                      {/* Transparent Match Rationales */}
-                      <div style={{ backgroundColor: "rgba(255, 255, 255, 0.04)", borderRadius: "8px", padding: "8px 10px", marginBottom: "12px" }}>
-                        <div style={{ fontSize: "11px", fontWeight: "700", color: "var(--text-brand)", marginBottom: "4px" }}>
-                          Why this result?
-                        </div>
-                        <ul style={{ listStyle: "none", padding: 0, margin: 0, fontSize: "11px", color: "var(--text-secondary)" }}>
-                          {cand.match_reasons.slice(0, 4).map((r, rIdx) => {
-                            const cleanR = r.replace("✓", "").trim();
-                            return <li key={rIdx} style={{ marginBottom: "2px" }}>✓ {cleanR}</li>;
-                          })}
-                        </ul>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div style={{ marginTop: "auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                        <button
-                          onClick={() => handleConfirmPhoto(p)}
-                          style={{
-                            backgroundColor: "rgba(16, 185, 129, 0.2)",
-                            color: "#34D399",
-                            border: "1px solid rgba(16, 185, 129, 0.4)",
-                            borderRadius: "6px",
-                            padding: "8px 10px",
-                            fontWeight: "700",
-                            fontSize: "12px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          ✓ This is the photo
-                        </button>
-                        <button
-                          onClick={() => handleRejectPhoto(p.id)}
-                          style={{
-                            backgroundColor: "rgba(239, 68, 68, 0.15)",
-                            color: "#F87171",
-                            border: "1px solid rgba(239, 68, 68, 0.3)",
-                            borderRadius: "6px",
-                            padding: "8px 10px",
-                            fontWeight: "600",
-                            fontSize: "12px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          ✕ Not this photo
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    View All {candidates.length} Ranked Candidates
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
-        ) : (
-          !isLoading && (
+          )}
+
+          {/* ZERO MATCH / NO STRONG MATCHES STATE (DO NOT FABRICATE RESULTS) */}
+          {hasSearched && candidates.length === 0 && !isLoading && (
+            <div
+              style={{
+                backgroundColor: "var(--bg-card)",
+                border: "1px dashed var(--border-medium)",
+                borderRadius: "16px",
+                padding: "36px 28px",
+                textAlign: "center",
+                maxWidth: "680px",
+                margin: "0 auto",
+              }}
+            >
+              <div style={{ fontSize: "36px", marginBottom: "12px" }}>🔍</div>
+              <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "18px", fontWeight: "700", color: "#fff", marginBottom: "8px" }}>
+                No strong matches found for this memory.
+              </h3>
+              <p style={{ color: "var(--text-secondary)", fontSize: "13px", marginBottom: "18px", lineHeight: "1.5" }}>
+                Our 40-photo representative archive couldn't find a confident match with the current clues.
+              </p>
+
+              <div
+                style={{
+                  backgroundColor: "var(--bg-inset)",
+                  borderRadius: "10px",
+                  padding: "14px 18px",
+                  textAlign: "left",
+                  fontSize: "12.5px",
+                  color: "var(--text-primary)",
+                  maxWidth: "420px",
+                  margin: "0 auto 20px",
+                  lineHeight: "1.7",
+                }}
+              >
+                <div style={{ fontWeight: "700", color: "var(--text-brand)", marginBottom: "4px" }}>
+                  Try adding another clue such as:
+                </div>
+                <div>• who was there</div>
+                <div>• where you were</div>
+                <div>• what was happening</div>
+                <div>• what someone was wearing</div>
+                <div>• what the photo looked like</div>
+                <div>• an approximate time</div>
+              </div>
+
+              <button
+                onClick={() => {
+                  refinementInputRef.current?.focus();
+                  refinementInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+                }}
+                style={{
+                  backgroundColor: "var(--accent-google-blue)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "10px 22px",
+                  fontWeight: "700",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                }}
+              >
+                🔍 Add another clue
+              </button>
+            </div>
+          )}
+
+          {/* Initial State (Before Search) */}
+          {!hasSearched && !isLoading && (
             <div
               style={{
                 backgroundColor: "var(--bg-surface)",
                 border: "1px dashed var(--border-medium)",
                 borderRadius: "14px",
-                padding: "48px 24px",
+                padding: "44px 24px",
                 textAlign: "center",
                 color: "var(--text-secondary)",
               }}
             >
-              <div style={{ fontSize: "36px", marginBottom: "12px" }}>📸</div>
-              <div style={{ fontSize: "15px", fontWeight: "600", color: "#fff", marginBottom: "6px" }}>
-                Ready to search personal memories
+              <div style={{ fontSize: "36px", marginBottom: "12px" }}>💭</div>
+              <div style={{ fontSize: "16px", fontWeight: "700", color: "#fff", marginBottom: "6px" }}>
+                Ready to search your memories
               </div>
               <p style={{ maxWidth: "480px", margin: "0 auto", fontSize: "13px", lineHeight: "1.5" }}>
-                Select one of the 3 research evaluation tasks above, or describe an informal memory in the search box to test multi-cue retrieval.
+                Type what you remember in the search box above, or choose an example chip to test how the AI translates fragmented memories into photos.
               </p>
             </div>
-          )
-        )}
+          )}
+        </div>
+
+        {/* ================================================================== */}
+        {/* SECONDARY SECTION: RESEARCH BENCHMARK TASKS (For Part 6 Testing) */}
+        {/* ================================================================== */}
+        <div
+          ref={benchmarkRef}
+          style={{
+            marginTop: "54px",
+            backgroundColor: "rgba(10, 15, 28, 0.9)",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: "16px",
+            padding: "24px",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "10px", marginBottom: "14px" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span style={{ fontSize: "18px" }}>🧪</span>
+                <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "17px", fontWeight: "800", color: "#fff" }}>
+                  Research Benchmark Tasks
+                </h3>
+                <span style={{ backgroundColor: "rgba(99, 102, 241, 0.2)", color: "#A5B4FC", fontSize: "10.5px", padding: "2px 8px", borderRadius: "4px", fontWeight: "700" }}>
+                  PART 6 RESEARCH MODE
+                </span>
+              </div>
+              <p style={{ color: "var(--text-secondary)", fontSize: "12.5px", marginTop: "4px" }}>
+                These are controlled scenarios used for usability testing. You can use them if you're participating in the research study.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "14px" }}>
+            {BENCHMARK_TASKS.map((task) => {
+              const isSelected = selectedTask.id === task.id;
+              return (
+                <div
+                  key={task.id}
+                  onClick={() => handleSelectBenchmarkTask(task)}
+                  style={{
+                    backgroundColor: isSelected ? "rgba(66, 133, 244, 0.12)" : "var(--bg-card)",
+                    border: isSelected ? "2px solid var(--accent-google-blue)" : "1px solid var(--border-subtle)",
+                    borderRadius: "12px",
+                    padding: "16px",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected) e.currentTarget.style.borderColor = "var(--border-medium)";
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) e.currentTarget.style.borderColor = "var(--border-subtle)";
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
+                    <div style={{ fontWeight: "700", fontSize: "13.5px", color: isSelected ? "#fff" : "var(--text-primary)" }}>
+                      {task.title}
+                    </div>
+                    <span style={{ fontSize: "10px", color: "var(--text-muted)", backgroundColor: "rgba(255, 255, 255, 0.05)", padding: "1px 6px", borderRadius: "4px" }}>
+                      {task.researchTag}
+                    </span>
+                  </div>
+
+                  <p style={{ fontSize: "11.5px", color: "var(--text-secondary)", lineHeight: "1.4", marginBottom: "10px" }}>
+                    {task.description}
+                  </p>
+
+                  <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "10.5px", color: "var(--text-brand)", fontWeight: "600" }}>
+                      Target: {task.targetPhotoId}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSelectBenchmarkTask(task);
+                      }}
+                      style={{
+                        backgroundColor: isSelected ? "var(--accent-google-blue)" : "transparent",
+                        border: isSelected ? "none" : "1px solid var(--border-medium)",
+                        color: "#fff",
+                        padding: "4px 10px",
+                        borderRadius: "6px",
+                        fontSize: "11px",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {isSelected ? "Active Task" : "Load Task →"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
         {/* ================================================================== */}
         {/* TELEMETRY HUD FOOTER */}
         {/* ================================================================== */}
         <div
           style={{
-            marginTop: "36px",
+            marginTop: "40px",
             borderTop: "1px solid var(--border-subtle)",
             paddingTop: "16px",
             display: "flex",
@@ -861,6 +1420,8 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
             alignItems: "center",
             fontSize: "12px",
             color: "var(--text-muted)",
+            flexWrap: "wrap",
+            gap: "8px",
           }}
         >
           <div>
@@ -990,8 +1551,8 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
 
             <button
               onClick={() => {
-                const nextTaskIndex = (EVALUATION_TASKS.findIndex((t) => t.id === selectedTask.id) + 1) % EVALUATION_TASKS.length;
-                handleSelectTask(EVALUATION_TASKS[nextTaskIndex]);
+                setCompletedSuccessPhoto(null);
+                handleFullReset();
               }}
               style={{
                 backgroundColor: "var(--accent-google-blue)",
@@ -1005,7 +1566,7 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
                 width: "100%",
               }}
             >
-              Log Session & Try Next Retrieval Task →
+              Log Session & Try Another Search →
             </button>
           </div>
         </div>
@@ -1044,7 +1605,7 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
               Abandon Retrieval Search?
             </h2>
             <p style={{ color: "var(--text-secondary)", fontSize: "13px", marginBottom: "16px" }}>
-              In accordance with Part 4 research, recording when and why a user gives up is critical for telemetry. Please select the primary reason:
+              Recording when and why a user abandons search provides crucial Part 6 usability telemetry. Please select the primary reason:
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px" }}>
