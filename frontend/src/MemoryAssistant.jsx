@@ -6,27 +6,27 @@ import React, { useState, useEffect, useRef } from "react";
 const BENCHMARK_TASKS = [
   {
     id: "TASK-1",
-    title: "Task 1 — Fuzzy Travel Memory",
+    title: "📍 Scenario 1 — Fuzzy Travel Memory",
     researchTag: "R7 & R8",
-    description: "Find an old beach sunset photo taken with friend Rohan roughly 3 years ago. No exact date is remembered.",
+    description: "You remember a Goa trip with a friend, but not the exact date.",
     defaultPrompt: "I remember a photo from a Goa trip with my friend Rohan around 3 years ago. I don't remember the exact date.",
     targetPhotoId: "PHOTO-007",
     targetTitle: "Goa Beach Sunset with Rohan",
   },
   {
     id: "TASK-2",
-    title: "Task 2 — University Marksheet",
+    title: "📄 Scenario 2 — Old Document",
     researchTag: "R12 & CLUST-06",
-    description: "Urgently find a saved degree marksheet or transcript scan from college around 2022. Exact filename is unknown.",
+    description: "You remember a university marksheet from around 2022, but not the exact filename or date.",
     defaultPrompt: "I remember a university marksheet or grade-sheet scan from around 2022. I don't remember the exact date or filename.",
     targetPhotoId: "PHOTO-031",
     targetTitle: "Bachelor of Technology Final Marksheet",
   },
   {
     id: "TASK-3",
-    title: "Task 3 — College Ramp Walk",
+    title: "🎭 Scenario 3 — Specific Event Photo",
     researchTag: "R9 & R14",
-    description: "Find a photo wearing a black and gold outfit on stage during a college ramp walk, rather than at the annual formal dinner.",
+    description: "You remember a college ramp-walk photo with a black & gold dress, but there are similar photos.",
     defaultPrompt: "I remember a college ramp walk photo where I was wearing a black and gold dress.",
     targetPhotoId: "PHOTO-023",
     targetTitle: "College Fest Ramp Walk in Black & Gold",
@@ -123,20 +123,8 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
   };
 
   const handleChipClick = (keyword) => {
-    setQueryText((prev) => {
-      const current = (prev || "").trim();
-      if (!current) {
-        return keyword;
-      }
-      const regex = new RegExp(`\\b${keyword}\\b`, "i");
-      if (regex.test(current)) {
-        return current;
-      }
-      if (current.endsWith(",") || current.endsWith(", ")) {
-        return `${current.replace(/,\s*$/, "")}, ${keyword}`;
-      }
-      return `${current}, ${keyword}`;
-    });
+    // Each keyword chip REPLACES the current search-box content
+    setQueryText(keyword);
     if (searchInputRef.current) {
       searchInputRef.current.focus();
     }
@@ -1341,17 +1329,20 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <span style={{ fontSize: "18px" }}>🧪</span>
                 <h3 style={{ fontFamily: "var(--font-heading)", fontSize: "17px", fontWeight: "800", color: "#fff" }}>
-                  Research Benchmark Tasks
+                  🧪 Try Realistic Memory Scenarios
                 </h3>
                 <span style={{ backgroundColor: "rgba(99, 102, 241, 0.2)", color: "#A5B4FC", fontSize: "10.5px", padding: "2px 8px", borderRadius: "4px", fontWeight: "700" }}>
-                  PART 6 RESEARCH MODE
+                  RESEARCH SCENARIOS
                 </span>
               </div>
-              <p style={{ color: "var(--text-secondary)", fontSize: "12.5px", marginTop: "4px", marginBottom: "4px" }}>
-                These are controlled scenarios for usability testing.
+              <p style={{ color: "var(--text-secondary)", fontSize: "12.5px", marginTop: "6px", marginBottom: "6px", maxWidth: "780px", lineHeight: "1.45" }}>
+                These are research scenarios, not separate features. They simulate situations where you remember a photo but don't remember the exact date or filename. Use them to test how well the AI understands your memory and helps you retrieve the right photo.
               </p>
-              <p style={{ color: "var(--text-muted)", fontSize: "11.5px" }}>
-                <strong>How to use:</strong> 1. Load a task &nbsp;•&nbsp; 2. Edit it if you want &nbsp;•&nbsp; 3. Search Memories &nbsp;•&nbsp; 4. Review and refine the results
+              <p style={{ color: "var(--text-muted)", fontSize: "11.5px", marginBottom: "4px" }}>
+                <strong>How to test:</strong> 1. Choose a scenario &nbsp;•&nbsp; 2. Load it &nbsp;•&nbsp; 3. Edit the memory if you want &nbsp;•&nbsp; 4. Search Memories &nbsp;•&nbsp; 5. Review and refine the results
+              </p>
+              <p style={{ color: "#94a3b8", fontSize: "11px", fontStyle: "italic", marginTop: "4px", opacity: 0.85 }}>
+                While testing, notice: Did the AI understand what you remembered? Were the results relevant? Did refinement help you get closer to the photo?
               </p>
             </div>
           </div>
@@ -1413,7 +1404,7 @@ export default function MemoryAssistant({ onSwitchToWorkbench }) {
                         cursor: "pointer",
                       }}
                     >
-                      {isSelected ? "Active Task" : "Load Task →"}
+                      {isSelected ? "Scenario Active" : "Load Scenario"}
                     </button>
                   </div>
                 </div>

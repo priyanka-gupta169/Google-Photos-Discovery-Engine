@@ -544,9 +544,15 @@ export default function App() {
       {/* 1. TOP NAVBAR */}
       <header className="navbar">
         <div className="brand-container">
-          <div className="brand-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l7.88-7.88" />
+          <div className="brand-icon" style={{ background: "#1e293b", padding: "2px", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <svg width="24" height="24" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11 11h12l1.8 2.5h3.2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-10a2 2 0 0 1 2-2h3.2L11 11z" stroke="#94a3b8" strokeWidth="1.6" fill="none"/>
+              <circle cx="17" cy="18" r="6" stroke="#475569" strokeWidth="1"/>
+              <path d="M17 18 L17 12.5 A5.5 5.5 0 0 1 22.5 18 Z" fill="#4285F4"/>
+              <path d="M17 18 L22.5 18 A5.5 5.5 0 0 1 17 23.5 Z" fill="#EA4335"/>
+              <path d="M17 18 L17 23.5 A5.5 5.5 0 0 1 11.5 18 Z" fill="#FBBC05"/>
+              <path d="M17 18 L11.5 18 A5.5 5.5 0 0 1 17 12.5 Z" fill="#34A853"/>
+              <circle cx="17" cy="18" r="1.8" fill="#0f172a"/>
             </svg>
           </div>
           <div>

@@ -32,8 +32,21 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Multicolor Photos-inspired Research Icon (SVG)
+PHOTOS_ICON_SVG = """<svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; flex-shrink: 0; display: inline-block;">
+  <rect width="34" height="34" rx="8" fill="#1e293b"/>
+  <path d="M11 11h12l1.8 2.5h3.2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-10a2 2 0 0 1 2-2h3.2L11 11z" stroke="#94a3b8" stroke-width="1.6" fill="none"/>
+  <circle cx="17" cy="18" r="6" stroke="#475569" stroke-width="1"/>
+  <path d="M17 18 L17 12.5 A5.5 5.5 0 0 1 22.5 18 Z" fill="#4285F4"/>
+  <path d="M17 18 L22.5 18 A5.5 5.5 0 0 1 17 23.5 Z" fill="#EA4335"/>
+  <path d="M17 18 L17 23.5 A5.5 5.5 0 0 1 11.5 18 Z" fill="#FBBC05"/>
+  <path d="M17 18 L11.5 18 A5.5 5.5 0 0 1 17 12.5 Z" fill="#34A853"/>
+  <circle cx="17" cy="18" r="1.8" fill="#0f172a"/>
+</svg>"""
+
+
 def append_keyword_to_query(current_text: str, keyword: str) -> str:
-    """Appends a keyword to the current query string, avoiding duplicates."""
+    """Appends a keyword to query string if needed (legacy helper)."""
     current = (current_text or "").strip()
     if not current:
         return keyword
@@ -84,13 +97,19 @@ db = get_database()
 
 # Sidebar
 with st.sidebar:
-    st.image(
-        "https://ssl.gstatic.com/social/photosui/images/logo/photos_logo_color_2x.png",
-        width=72,
+    st.markdown(
+        f"""
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+            {PHOTOS_ICON_SVG}
+            <div>
+                <div style="font-size: 1.05rem; font-weight: 700; color: #f8fafc; line-height: 1.2;">Google Photos Discovery Engine</div>
+                <div style="font-size: 0.76rem; color: #94a3b8; font-weight: 600;">Photo Retrieval Research Prototype</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
-    st.markdown("### Google Photos Discovery Engine")
-    st.markdown("**Photo Retrieval Research Prototype**")
-    st.markdown("*Core Experience Research*")
+    st.caption("Core Experience Research • Independent research prototype (not affiliated with Google LLC).")
     st.markdown("---")
 
     st.markdown("#### 🎯 Business Goal")
@@ -110,9 +129,17 @@ with st.sidebar:
 
 
 # Title banner
-st.markdown('<div class="main-header">Google Photos Discovery Engine</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="sub-header">Evidence-Driven Qualitative Retrieval Friction Discovery Engine & Analytical PM Workbench</div>',
+    f"""
+    <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 0.2rem;">
+        {PHOTOS_ICON_SVG}
+        <span class="main-header" style="margin-bottom: 0;">Google Photos Discovery Engine</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+st.markdown(
+    '<div class="sub-header">Photo Retrieval Research Prototype — Evidence-Driven Qualitative Retrieval Friction Discovery Engine & Analytical PM Workbench</div>',
     unsafe_allow_html=True,
 )
 
@@ -151,18 +178,10 @@ with tab_mvp:
         )
 
     def cb_apply_chip(keyword: str):
-        current = st.session_state.get("mvp_main_search_textarea", "").strip()
-        if not current:
-            new_val = keyword
-        elif re.search(rf"\b{re.escape(keyword)}\b", current, re.IGNORECASE):
-            new_val = current
-        else:
-            if current.endswith(",") or current.endswith(", "):
-                new_val = f"{current.rstrip(', ')}, {keyword}"
-            else:
-                new_val = f"{current}, {keyword}"
-        st.session_state.mvp_main_search_textarea = new_val
-        st.session_state.mvp_query_input = new_val
+        # Each keyword chip REPLACES current search-box content (no comma appending)
+        st.session_state.mvp_main_search_textarea = keyword
+        st.session_state.mvp_query_input = keyword
+        st.session_state.mvp_scroll_to_search = True
 
     def cb_load_benchmark_task(task_id: str, prompt: str):
         st.session_state.mvp_main_search_textarea = prompt
@@ -236,8 +255,14 @@ with tab_mvp:
     # Primary Open-Ended Search Input Bar
     st.markdown("### What photo are you trying to find?")
     if st.session_state.mvp_active_task_id != "OPEN_ENDED":
+        scenario_labels = {
+            "TASK-1": "Scenario 1 — Fuzzy Travel Memory",
+            "TASK-2": "Scenario 2 — Old Document",
+            "TASK-3": "Scenario 3 — Specific Event Photo",
+        }
+        scen_name = scenario_labels.get(st.session_state.mvp_active_task_id, st.session_state.mvp_active_task_id)
         st.info(
-            f"🎯 **Controlled Benchmark Loaded ({st.session_state.mvp_active_task_id})**: "
+            f"🎯 **{scen_name} Loaded**: "
             "You can freely edit this memory in the box below before clicking **Search Memories**."
         )
 
@@ -448,13 +473,24 @@ with tab_mvp:
                 "- • an approximate time"
             )
 
-    # ----------------- SECONDARY SECTION: RESEARCH BENCHMARK TASKS -----------------
+    # ----------------- SECONDARY SECTION: REALISTIC MEMORY SCENARIOS -----------------
     st.markdown("---")
-    st.markdown("### 🧪 Research Benchmark Tasks")
-    st.markdown("These are controlled scenarios for usability testing.")
+    st.markdown("### 🧪 Try Realistic Memory Scenarios")
     st.markdown(
-        "<p style='color: #94a3b8; font-size: 0.88rem; margin-bottom: 12px;'>"
-        "<strong>How to use:</strong> 1. Load a task &nbsp;•&nbsp; 2. Edit it if you want &nbsp;•&nbsp; 3. Search Memories &nbsp;•&nbsp; 4. Review and refine the results"
+        "These are research scenarios, not separate features. They simulate situations where you "
+        "remember a photo but don't remember the exact date or filename. Use them to test how well "
+        "the AI understands your memory and helps you retrieve the right photo."
+    )
+    st.markdown(
+        "<p style='color: #94a3b8; font-size: 0.88rem; margin-bottom: 6px;'>"
+        "<strong>How to test:</strong> 1. Choose a scenario &nbsp;&nbsp;2. Load it &nbsp;&nbsp;"
+        "3. Edit the memory if you want &nbsp;&nbsp;4. Search Memories &nbsp;&nbsp;5. Review and refine the results"
+        "</p>",
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        "<p style='color: #94a3b8; font-size: 0.82rem; font-style: italic; margin-bottom: 16px; opacity: 0.85;'>"
+        "While testing, notice: Did the AI understand what you remembered? Were the results relevant? Did refinement help you get closer to the photo?"
         "</p>",
         unsafe_allow_html=True,
     )
@@ -465,33 +501,33 @@ with tab_mvp:
 
     bench_col1, bench_col2, bench_col3 = st.columns(3)
     with bench_col1:
-        st.markdown("**Task 1 — Fuzzy Travel Memory**")
-        st.caption("Trip to Goa with friend Rohan ~3 years ago. No exact date.")
+        st.markdown("**📍 Scenario 1 — Fuzzy Travel Memory**")
+        st.caption("You remember a Goa trip with a friend, but not the exact date.")
         st.button(
-            "Load Task 1",
-            key="btn_load_task_1",
+            "Load Scenario",
+            key="btn_load_scenario_1",
             on_click=cb_load_benchmark_task,
             args=("TASK-1", prompt_t1),
             use_container_width=True,
         )
 
     with bench_col2:
-        st.markdown("**Task 2 — University Marksheet**")
-        st.caption("Saved degree marksheet / transcript scan from college ~2022.")
+        st.markdown("**📄 Scenario 2 — Old Document**")
+        st.caption("You remember a university marksheet from around 2022, but not the exact filename or date.")
         st.button(
-            "Load Task 2",
-            key="btn_load_task_2",
+            "Load Scenario",
+            key="btn_load_scenario_2",
             on_click=cb_load_benchmark_task,
             args=("TASK-2", prompt_t2),
             use_container_width=True,
         )
 
     with bench_col3:
-        st.markdown("**Task 3 — College Ramp Walk**")
-        st.caption("Ramp walk in black and gold dress on auditorium stage.")
+        st.markdown("**🎭 Scenario 3 — Specific Event Photo**")
+        st.caption("You remember a college ramp-walk photo with a black & gold dress, but there are similar photos.")
         st.button(
-            "Load Task 3",
-            key="btn_load_task_3",
+            "Load Scenario",
+            key="btn_load_scenario_3",
             on_click=cb_load_benchmark_task,
             args=("TASK-3", prompt_t3),
             use_container_width=True,
