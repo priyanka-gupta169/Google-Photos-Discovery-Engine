@@ -150,6 +150,45 @@ with tab_mvp:
             """
         )
 
+    def cb_apply_chip(keyword: str):
+        current = st.session_state.get("mvp_main_search_textarea", "").strip()
+        if not current:
+            new_val = keyword
+        elif re.search(rf"\b{re.escape(keyword)}\b", current, re.IGNORECASE):
+            new_val = current
+        else:
+            if current.endswith(",") or current.endswith(", "):
+                new_val = f"{current.rstrip(', ')}, {keyword}"
+            else:
+                new_val = f"{current}, {keyword}"
+        st.session_state.mvp_main_search_textarea = new_val
+        st.session_state.mvp_query_input = new_val
+
+    def cb_load_benchmark_task(task_id: str, prompt: str):
+        st.session_state.mvp_main_search_textarea = prompt
+        st.session_state.mvp_query_input = prompt
+        st.session_state.mvp_active_task_id = task_id
+        st.session_state.mvp_cues = None
+        st.session_state.mvp_candidates = []
+        st.session_state.mvp_rejected_ids = []
+        st.session_state.mvp_has_searched = False
+        st.session_state.mvp_prev_count = None
+        st.session_state.mvp_scroll_to_search = True
+
+    def cb_reset_search():
+        st.session_state.mvp_main_search_textarea = ""
+        st.session_state.mvp_query_input = ""
+        st.session_state.mvp_cues = None
+        st.session_state.mvp_candidates = []
+        st.session_state.mvp_rejected_ids = []
+        st.session_state.mvp_attempts = 0
+        st.session_state.mvp_refinements = 0
+        st.session_state.mvp_session_outcome = None
+        st.session_state.mvp_has_searched = False
+        st.session_state.mvp_prev_count = None
+        st.session_state.mvp_active_task_id = "OPEN_ENDED"
+        st.session_state.mvp_reject_notice = False
+
     if "mvp_engine" not in st.session_state:
         st.session_state.mvp_engine = MemoryRetrievalEngine()
     if "mvp_cues" not in st.session_state:
@@ -226,12 +265,13 @@ with tab_mvp:
     ]
     for i, (label, kw) in enumerate(chips_data):
         with chip_cols[i]:
-            if st.button(label, key=f"chip_btn_{i}", use_container_width=True):
-                current_text = st.session_state.get("mvp_main_search_textarea", "")
-                new_text = append_keyword_to_query(current_text, kw)
-                st.session_state.mvp_main_search_textarea = new_text
-                st.session_state.mvp_query_input = new_text
-                st.rerun()
+            st.button(
+                label,
+                key=f"chip_btn_{i}",
+                on_click=cb_apply_chip,
+                args=(kw,),
+                use_container_width=True,
+            )
 
     st.markdown(
         "<small style='color: #94a3b8;'>You don't need the exact date, filename, or exact words.</small>",
@@ -242,20 +282,13 @@ with tab_mvp:
     with col_btn1:
         search_clicked = st.button("🔍 Search Memories", type="primary", use_container_width=True)
     with col_btn2:
-        if st.button("🔄 Reset Search", use_container_width=False, help="Start a new photo search and clear the current memory and results."):
-            st.session_state.mvp_cues = None
-            st.session_state.mvp_candidates = []
-            st.session_state.mvp_rejected_ids = []
-            st.session_state.mvp_attempts = 0
-            st.session_state.mvp_refinements = 0
-            st.session_state.mvp_session_outcome = None
-            st.session_state.mvp_has_searched = False
-            st.session_state.mvp_prev_count = None
-            st.session_state.mvp_query_input = ""
-            st.session_state.mvp_main_search_textarea = ""
-            st.session_state.mvp_active_task_id = "OPEN_ENDED"
-            st.session_state.mvp_reject_notice = False
-            st.rerun()
+        st.button(
+            "🔄 Reset Search",
+            key="btn_reset_search",
+            on_click=cb_reset_search,
+            use_container_width=False,
+            help="Start a new photo search and clear the current memory and results.",
+        )
 
     query_to_search = user_query.strip() if user_query else ""
     if search_clicked and query_to_search:
@@ -426,54 +459,43 @@ with tab_mvp:
         unsafe_allow_html=True,
     )
 
+    prompt_t1 = "I remember a photo from a Goa trip with my friend Rohan around 3 years ago. I don't remember the exact date."
+    prompt_t2 = "I remember a university marksheet or grade-sheet scan from around 2022. I don't remember the exact date or filename."
+    prompt_t3 = "I remember a college ramp walk photo where I was wearing a black and gold dress."
+
     bench_col1, bench_col2, bench_col3 = st.columns(3)
     with bench_col1:
         st.markdown("**Task 1 — Fuzzy Travel Memory**")
         st.caption("Trip to Goa with friend Rohan ~3 years ago. No exact date.")
-        if st.button("Load Task 1", use_container_width=True):
-            prompt_t1 = "I remember a photo from a Goa trip with my friend Rohan around 3 years ago. I don't remember the exact date."
-            st.session_state.mvp_main_search_textarea = prompt_t1
-            st.session_state.mvp_query_input = prompt_t1
-            st.session_state.mvp_active_task_id = "TASK-1"
-            st.session_state.mvp_cues = None
-            st.session_state.mvp_candidates = []
-            st.session_state.mvp_rejected_ids = []
-            st.session_state.mvp_has_searched = False
-            st.session_state.mvp_prev_count = None
-            st.session_state.mvp_scroll_to_search = True
-            st.rerun()
+        st.button(
+            "Load Task 1",
+            key="btn_load_task_1",
+            on_click=cb_load_benchmark_task,
+            args=("TASK-1", prompt_t1),
+            use_container_width=True,
+        )
 
     with bench_col2:
         st.markdown("**Task 2 — University Marksheet**")
         st.caption("Saved degree marksheet / transcript scan from college ~2022.")
-        if st.button("Load Task 2", use_container_width=True):
-            prompt_t2 = "I remember a university marksheet or grade-sheet scan from around 2022. I don't remember the exact date or filename."
-            st.session_state.mvp_main_search_textarea = prompt_t2
-            st.session_state.mvp_query_input = prompt_t2
-            st.session_state.mvp_active_task_id = "TASK-2"
-            st.session_state.mvp_cues = None
-            st.session_state.mvp_candidates = []
-            st.session_state.mvp_rejected_ids = []
-            st.session_state.mvp_has_searched = False
-            st.session_state.mvp_prev_count = None
-            st.session_state.mvp_scroll_to_search = True
-            st.rerun()
+        st.button(
+            "Load Task 2",
+            key="btn_load_task_2",
+            on_click=cb_load_benchmark_task,
+            args=("TASK-2", prompt_t2),
+            use_container_width=True,
+        )
 
     with bench_col3:
         st.markdown("**Task 3 — College Ramp Walk**")
         st.caption("Ramp walk in black and gold dress on auditorium stage.")
-        if st.button("Load Task 3", use_container_width=True):
-            prompt_t3 = "I remember a college ramp walk photo where I was wearing a black and gold dress."
-            st.session_state.mvp_main_search_textarea = prompt_t3
-            st.session_state.mvp_query_input = prompt_t3
-            st.session_state.mvp_active_task_id = "TASK-3"
-            st.session_state.mvp_cues = None
-            st.session_state.mvp_candidates = []
-            st.session_state.mvp_rejected_ids = []
-            st.session_state.mvp_has_searched = False
-            st.session_state.mvp_prev_count = None
-            st.session_state.mvp_scroll_to_search = True
-            st.rerun()
+        st.button(
+            "Load Task 3",
+            key="btn_load_task_3",
+            on_click=cb_load_benchmark_task,
+            args=("TASK-3", prompt_t3),
+            use_container_width=True,
+        )
 
     # Dataset inspection expander
     with st.expander("🔍 Audit Controlled Representative Dataset (40 Photos)"):
