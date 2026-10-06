@@ -21,6 +21,8 @@ from src.storage.database import DatabaseManager
 from src.extraction.relevance_filter import RelevanceClassifier
 from src.extraction.taxonomy_extractor import TaxonomyExtractor
 from src.ai.cue_extractor import extract_memory_cues
+import src.data.representative_dataset
+importlib.reload(src.data.representative_dataset)
 import src.retrieval.scoring
 importlib.reload(src.retrieval.scoring)
 from src.retrieval.scoring import MemoryRetrievalEngine
