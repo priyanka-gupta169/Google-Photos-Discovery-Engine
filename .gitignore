@@ -56,3 +56,10 @@ yarn-error.log*
 .DS_Store
 Thumbs.db
 cloudflared.exe
+
+# Scratch & Temporary Rendering Artifacts
+slide_images/
+slide_images_final/
+presentation_assets/
+step458.txt
+
