@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     REDDIT_CLIENT_ID: str = Field(default="")
     REDDIT_CLIENT_SECRET: str = Field(default="")
     REDDIT_USER_AGENT: str = Field(
-        default="GooglePhotosResearchBot/1.0 (NextLeap Graduation Project)"
+        default="GooglePhotosResearchBot/1.0 (Core Experience Research)"
     )
     YOUTUBE_API_KEY: str = Field(default="")
 

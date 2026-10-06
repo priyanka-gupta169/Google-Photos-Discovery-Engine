@@ -19,7 +19,7 @@ from pathlib import Path
 def run_all_tests():
     print("=" * 80)
     print("GOOGLE PHOTOS DISCOVERY ENGINE — MASTER TEST RUNNER")
-    print("NextLeap PM Graduation Project (Part 1)")
+    print("Core Experience Research (Part 1)")
     print("=" * 80)
     print("Starting automated test execution across all phases (0-7)...\n")
 

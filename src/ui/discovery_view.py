@@ -25,7 +25,7 @@ def render_discovery_engine(db: DatabaseManager, show_navigation_link: bool = Tr
             st.markdown(
                 """
                 <div class="app-switcher-badge">
-                    <span>🔬 DELIVERABLE 1 OF 3: AI DISCOVERY ENGINE</span>
+                    <span>🔬 AI DISCOVERY ENGINE</span>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -51,7 +51,7 @@ def render_discovery_engine(db: DatabaseManager, show_navigation_link: bool = Tr
         </div>
         <div class="discovery-subhead">Core Experience Research</div>
         <div class="discovery-desc">
-            AI-powered analysis of public user feedback to uncover recurring photo retrieval friction, behavioral patterns and product opportunities.
+            AI-powered analysis of public user feedback to uncover recurring photo retrieval friction, behavioral patterns, and product opportunities.
         </div>
         """,
         unsafe_allow_html=True,

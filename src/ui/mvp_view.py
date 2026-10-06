@@ -32,7 +32,7 @@ def render_mvp_assistant(show_navigation_link: bool = True):
             st.markdown(
                 """
                 <div class="app-switcher-banner">
-                    <span>📸 DELIVERABLE 3 OF 3: DEPLOYED AI-NATIVE MVP</span>
+                    <span>📸 AI MEMORY RETRIEVAL ASSISTANT</span>
                 </div>
                 """,
                 unsafe_allow_html=True,

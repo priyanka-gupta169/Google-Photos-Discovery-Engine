@@ -53,7 +53,7 @@ if current_param == "mvp":
     )
 else:
     st.set_page_config(
-        page_title="Google Photos Discovery Engine | Core Experience Research",
+        page_title="Google Photos Discovery Engine",
         page_icon="🔍",
         layout="wide",
         initial_sidebar_state="expanded",
@@ -97,11 +97,11 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
 
-    st.caption(f"Build: `{get_deployment_commit()}` • NextLeap Graduation Project Deliverables (not affiliated with Google LLC).")
+    st.caption(f"Build: `{get_deployment_commit()}` • Core Experience Research (not affiliated with Google LLC).")
     st.markdown("---")
 
     # Seamless View Switcher
-    st.markdown("#### 🔀 Switch Deliverable")
+    st.markdown("#### 🔀 Switch Application")
     selected_view = st.radio(
         "Active Application:",
         options=["🔬 AI Discovery Engine", "📸 AI Memory Assistant (MVP)"],

@@ -29,7 +29,7 @@ def get_deployment_commit() -> str:
 
 # Dedicated Page Configuration
 st.set_page_config(
-    page_title="Google Photos Discovery Engine | Core Experience Research",
+    page_title="Google Photos Discovery Engine",
     page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -58,7 +58,7 @@ with st.sidebar:
         """,
         unsafe_allow_html=True,
     )
-    st.caption(f"Build: `{get_deployment_commit()}` • Research intelligence platform (not affiliated with Google LLC).")
+    st.caption(f"Build: `{get_deployment_commit()}` • Core Experience Research (not affiliated with Google LLC).")
     st.markdown("---")
 
     st.markdown("#### 🎯 Business Goal")
