@@ -123,6 +123,7 @@ def refine_endpoint(req: RefineRequest) -> RefineResponse:
             new_clue_text=req.new_clue_text,
             selected_chip=req.selected_chip,
             rejected_photo_ids=req.rejected_photo_ids,
+            active_task_id=req.active_task_id,
         )
         return refined
     except Exception as e:

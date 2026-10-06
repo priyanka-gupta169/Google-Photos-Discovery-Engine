@@ -395,9 +395,10 @@ with tab_mvp:
                 st.session_state.mvp_prev_count = len(st.session_state.mvp_candidates)
                 st.session_state.mvp_reject_notice = False
                 refine_res = st.session_state.mvp_engine.refine(
-                    previous_cues=st.session_state.mvp_cues,
+                    previous_cues=st.session_state.mvp_cues or MemoryCues(),
                     new_clue_text=refine_input,
                     rejected_photo_ids=st.session_state.mvp_rejected_ids,
+                    active_task_id=st.session_state.get("mvp_active_task_id"),
                 )
                 st.session_state.mvp_cues = refine_res.updated_cues
                 st.session_state.mvp_candidates = refine_res.results
@@ -448,10 +449,10 @@ with tab_mvp:
                                 st.session_state.mvp_prev_count = len(st.session_state.mvp_candidates)
                                 st.session_state.mvp_reject_notice = True
                                 refine_res = st.session_state.mvp_engine.refine(
-                                    previous_cues=st.session_state.mvp_cues,
+                                    previous_cues=st.session_state.mvp_cues or MemoryCues(),
                                     new_clue_text="Rejected photo",
                                     rejected_photo_ids=st.session_state.mvp_rejected_ids,
-                                    active_task_id=st.session_state.mvp_active_task_id,
+                                    active_task_id=st.session_state.get("mvp_active_task_id"),
                                 )
                                 st.session_state.mvp_candidates = refine_res.results
                                 st.rerun()

@@ -224,27 +224,39 @@ class MemoryRetrievalEngine:
 
     def refine(
         self,
-        previous_cues: MemoryCues,
-        new_clue_text: str,
+        previous_cues: Optional[MemoryCues] = None,
+        new_clue_text: str = "",
         selected_chip: Optional[str] = None,
         rejected_photo_ids: Optional[List[str]] = None,
+        active_task_id: Optional[str] = None,
     ) -> RefineResponse:
         """Merges new memory clue into existing context and re-scores candidates."""
         rejected_photo_ids = rejected_photo_ids or []
+        if previous_cues is None:
+            previous_cues = MemoryCues()
         
-        # 1. Parse additional memory clues from new text
-        extraction_res = extract_memory_cues(new_clue_text)
-        new_cues = extraction_res.cues
+        # 1. Parse additional memory clues from new text (skip extraction if pure rejection flag)
+        if new_clue_text and new_clue_text.strip().lower() not in ["rejected photo", "not this photo", "not this"]:
+            extraction_res = extract_memory_cues(new_clue_text)
+            new_cues = extraction_res.cues
+            suggested_refinements = extraction_res.suggested_refinements
+        else:
+            new_cues = MemoryCues()
+            suggested_refinements = [
+                "Add a person: Who was with you?",
+                "Specify setting: Where was this taken (beach, cafe, indoor)?",
+                "Describe clothing or visual colors",
+            ]
 
         # 2. Merge into updated cues (delta enrichment)
-        merged_companions = list(set(previous_cues.companions + new_cues.companions))
-        merged_visuals = list(set(previous_cues.visual_attributes + new_cues.visual_attributes))
-        merged_objects = list(set(previous_cues.objects + new_cues.objects))
+        merged_companions = list(set((previous_cues.companions or []) + (new_cues.companions or [])))
+        merged_visuals = list(set((previous_cues.visual_attributes or []) + (new_cues.visual_attributes or [])))
+        merged_objects = list(set((previous_cues.objects or []) + (new_cues.objects or [])))
 
         updated_cues = MemoryCues(
             approximate_time=new_cues.approximate_time or previous_cues.approximate_time,
             normalized_year=new_cues.normalized_year or previous_cues.normalized_year,
-            year_tolerance=min(previous_cues.year_tolerance, new_cues.year_tolerance),
+            year_tolerance=min(previous_cues.year_tolerance or 1, new_cues.year_tolerance or 1),
             season=new_cues.season or previous_cues.season,
             companions=merged_companions,
             location=new_cues.location or previous_cues.location,
@@ -277,10 +289,16 @@ class MemoryRetrievalEngine:
         if new_cues.visual_attributes:
             clues_added_str.append(f"Visual: {', '.join(new_cues.visual_attributes)}")
 
-        system_message = (
-            f"Narrowed candidate pool down to {search_res.total_candidates} results "
-            f"by incorporating: {', '.join(clues_added_str) if clues_added_str else 'additional memory clues'}."
-        )
+        if rejected_photo_ids and not clues_added_str:
+            system_message = (
+                f"Updated candidate pool to {search_res.total_candidates} results "
+                f"after removing rejected photo(s)."
+            )
+        else:
+            system_message = (
+                f"Narrowed candidate pool down to {search_res.total_candidates} results "
+                f"by incorporating: {', '.join(clues_added_str) if clues_added_str else 'additional memory clues'}."
+            )
 
         return RefineResponse(
             status="success",
@@ -288,5 +306,5 @@ class MemoryRetrievalEngine:
             updated_cues=updated_cues,
             total_candidates=search_res.total_candidates,
             results=search_res.results,
-            suggested_refinements=extraction_res.suggested_refinements,
+            suggested_refinements=suggested_refinements,
         )
