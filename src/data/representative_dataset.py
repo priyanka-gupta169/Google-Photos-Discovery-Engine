@@ -208,7 +208,7 @@ REPRESENTATIVE_DATASET: List[RepresentativePhoto] = [
         location="Home, New Delhi",
         activity="Lighting oil lamps and celebrating Diwali festival",
         visual_tags=["traditional kurta", "diyas", "marigold flowers", "fairy lights", "festive", "indoor"],
-        thumbnail_url="https://images.unsplash.com/photo-1605379399642-870262d3d051?w=600&auto=format&fit=crop&q=80",
+        thumbnail_url="https://images.unsplash.com/photo-1730130596425-197566414dc4?w=600&auto=format&fit=crop&q=80",
         description="Family gathered in festive silk kurtas placing clay oil lamps around an intricate flower rangoli on the floor.",
     ),
     RepresentativePhoto(
@@ -261,7 +261,7 @@ REPRESENTATIVE_DATASET: List[RepresentativePhoto] = [
         location="Bangalore, Cubbon Park",
         activity="Relaxing on picnic blanket under bamboo trees",
         visual_tags=["picnic basket", "woven mat", "dog", "green park", "sunny shade", "outdoors"],
-        thumbnail_url="https://images.unsplash.com/photo-1517849845537-4d257902454a?w=600&auto=format&fit=crop&q=80",
+        thumbnail_url="https://plus.unsplash.com/premium_photo-1683133332890-fee39b3233f7?w=600&auto=format&fit=crop&q=80",
         description="Relaxing sunny afternoon picnic spread on a red checkered cloth with the pet golden retriever resting beside.",
     ),
     RepresentativePhoto(
@@ -287,7 +287,7 @@ REPRESENTATIVE_DATASET: List[RepresentativePhoto] = [
         location="Fine Dining Restaurant",
         activity="Celebrating sister's master degree achievement",
         visual_tags=["formal dinner", "flower bouquet", "glass toast", "celebration", "indoor"],
-        thumbnail_url="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=600&auto=format&fit=crop&q=80",
+        thumbnail_url="https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=600&auto=format&fit=crop&q=80",
         description="Parents presenting a floral bouquet to sister across a dinner table set with linen napkins and champagne glasses.",
     ),
     RepresentativePhoto(
